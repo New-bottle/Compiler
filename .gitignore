@@ -1,1 +1,5 @@
 ref/*
+Parser/*
+bin/*
+out/*
+*.class
