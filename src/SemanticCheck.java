@@ -9,15 +9,9 @@ import java.util.Scanner;
 
 public class SemanticCheck {
     static public void main(String[] args) throws Exception{
-        String pos = "/home/yanhongyu/Git/homework/Compiler/test/semantic/testcase_677.txt";
+        String pos = "/home/yanhongyu/Git/homework/Compiler/test/semantic/testcase_615.txt";
         FileInputStream fin = new FileInputStream(pos);
-        Scanner sc = new Scanner(fin);
-        String expr = "";
-        while (sc.hasNextLine()) {
-            expr = expr + '\n' + sc.nextLine();
-        }
-
-        ANTLRInputStream input = new ANTLRInputStream(expr);
+        ANTLRInputStream input = new ANTLRInputStream(fin);
         grammarsLexer lexer = new grammarsLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         grammarsParser parser = new grammarsParser(tokens);

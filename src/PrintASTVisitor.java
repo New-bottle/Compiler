@@ -71,6 +71,11 @@ public class PrintASTVisitor<T> implements ASTVisitor<T> {
         return null;
     }
 
+    @Override
+    public T visit(BoolLiteralNode boolLiteralNode) {
+        return null;
+    }
+
     public T visit(BreakNode breakNode) {
         out.print(indent()+"Break");
         return null;
@@ -232,6 +237,11 @@ public class PrintASTVisitor<T> implements ASTVisitor<T> {
             }
         }
         out.println("");
+        return null;
+    }
+
+    @Override
+    public T visit(NullNode nullNode) {
         return null;
     }
 

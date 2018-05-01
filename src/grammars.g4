@@ -6,8 +6,8 @@ INT_ID    : 'int'     ;
 STR_ID    : 'string'  ;
 VOID_ID   : 'void'    ;
 NULL_ID   : 'null'    ;
-TRUE_VAL  : 'true'    ;
-FALSE_VAL : 'false'   ;
+fragment TRUE_VAL  : 'true'    ;
+fragment FALSE_VAL : 'false'   ;
 IF_ID     : 'if'      ;
 FOR_ID    : 'for'     ;
 WHILE_ID  : 'while'   ;
@@ -115,14 +115,19 @@ expr       : expr op=('++'|'--')               # PostfixIncDec
 
            | ID                                # Var
            | THIS_ID                           # this
-           | INT                               # CONST
-           | STRING                            # STR
+           | constant                          # Literal
            | '(' expr ')'                      # Parens
            ;
 
-creator    : nonArrayTypeSpecifier                            # creatorNonArray
+creator    : nonArrayTypeSpecifier ('[' expr ']')+ ('['']')+  # creatorError
            | nonArrayTypeSpecifier ('[' expr ']')+ ('['']')*  # creatorArray
-           | nonArrayTypeSpecifier ('[' expr ']')+ ('['']')+  # creatorError
+           | nonArrayTypeSpecifier                            # creatorNonArray
+           ;
+
+constant   : type=IntLiteral
+           | type=STRING
+           | type=NULL_ID
+           | type=BoolLiteral
            ;
 
 ID         : ID_LETTER ( ID_LETTER | DIGIT | UDL)* ; // From C language
@@ -130,7 +135,11 @@ ID         : ID_LETTER ( ID_LETTER | DIGIT | UDL)* ; // From C language
 fragment ID_LETTER : 'a'..'z' | 'A'..'Z';
 fragment UDL : '_';
 
-INT   : [0-9]+ ;         // match 1 or more digits
+fragment NonZeroDigit: [1-9] ;
+
+IntLiteral  : NonZeroDigit DIGIT*
+            | '0'
+            ;
 fragment DIGIT :  [0-9];          // match single digit
 
 STRING: '"' (ESC|.)*? '"' ;
@@ -168,3 +177,8 @@ DSUB   : '--' ;
 
 LBracket: '[' ;
 RBracket: ']' ;
+
+BoolLiteral : TRUE_VAL
+            | FALSE_VAL
+            ;
+

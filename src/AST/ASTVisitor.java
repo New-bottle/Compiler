@@ -11,6 +11,8 @@ public interface ASTVisitor<T> {
 
     T visit(BlockNode blockNode);
 
+    T visit(BoolLiteralNode boolLiteralNode);
+
     T visit(BreakNode breakNode);
 
     T visit(BuiltInType builtInType);
@@ -44,6 +46,8 @@ public interface ASTVisitor<T> {
     T visit(MemberFuncNode memberFuncNode);
 
     T visit(NewExpr newExpr);
+
+    T visit(NullNode nullNode);
 
     T visit(PostOpNode postOpNode);
 

@@ -222,6 +222,13 @@ public interface grammarsVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitNew(grammarsParser.NewContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code MemberAccess}
+	 * labeled alternative in {@link grammarsParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitMemberAccess(grammarsParser.MemberAccessContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code Var}
 	 * labeled alternative in {@link grammarsParser#expr}.
 	 * @param ctx the parse tree
@@ -235,6 +242,13 @@ public interface grammarsVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitParens(grammarsParser.ParensContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code Literal}
+	 * labeled alternative in {@link grammarsParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitLiteral(grammarsParser.LiteralContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code BinaryExpr}
 	 * labeled alternative in {@link grammarsParser#expr}.
@@ -278,33 +292,12 @@ public interface grammarsVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitUnaryExpr(grammarsParser.UnaryExprContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code STR}
-	 * labeled alternative in {@link grammarsParser#expr}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitSTR(grammarsParser.STRContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code MemberAccess}
-	 * labeled alternative in {@link grammarsParser#expr}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitMemberAccess(grammarsParser.MemberAccessContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code CONST}
-	 * labeled alternative in {@link grammarsParser#expr}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitCONST(grammarsParser.CONSTContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code creatorNonArray}
+	 * Visit a parse tree produced by the {@code creatorError}
 	 * labeled alternative in {@link grammarsParser#creator}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitCreatorNonArray(grammarsParser.CreatorNonArrayContext ctx);
+	T visitCreatorError(grammarsParser.CreatorErrorContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code creatorArray}
 	 * labeled alternative in {@link grammarsParser#creator}.
@@ -313,10 +306,16 @@ public interface grammarsVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitCreatorArray(grammarsParser.CreatorArrayContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code creatorError}
+	 * Visit a parse tree produced by the {@code creatorNonArray}
 	 * labeled alternative in {@link grammarsParser#creator}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitCreatorError(grammarsParser.CreatorErrorContext ctx);
+	T visitCreatorNonArray(grammarsParser.CreatorNonArrayContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link grammarsParser#constant}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitConstant(grammarsParser.ConstantContext ctx);
 }
