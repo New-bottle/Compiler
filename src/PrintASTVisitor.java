@@ -35,15 +35,18 @@ public class PrintASTVisitor<T> implements ASTVisitor<T> {
     }
 
     public T visit(ArefNode arefNode) {
-        out.print("Aref");
-        out.print(arefNode.name + "[");
+        out.print("<Aref :");
+        arefNode.name.accept(this);
+        out.print("[");
         arefNode.iter.accept(this);
-        out.print("]");
+        out.print("]>");
         return null;
     }
 
     public T visit(ArrayType arrayType) {
-        //TODO
+        out.print("<ArrayType :");
+        arrayType.baseType.accept(this);
+        out.print(">");
         return null;
     }
 
@@ -161,17 +164,16 @@ public class PrintASTVisitor<T> implements ASTVisitor<T> {
     }
 
     public T visit(FunctionCallNode functionCallNode) {
-        out.print(indent()+"FuncCall:");
+        out.print("{FuncCall:");
         out.print(functionCallNode.name);
         if (functionCallNode.parameters!=null) {
-            right();
             out.print(" parameters:");
             for (int i = 0; i < functionCallNode.parameters.size(); i++) {
                 functionCallNode.parameters.get(i).accept(this);
                 out.print(", ");
             }
         }
-        out.println("");
+        out.println("}");
         return null;
     }
 

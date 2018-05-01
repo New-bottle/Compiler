@@ -1,6 +1,7 @@
 import AST.*;
 import Symbols.Symbol;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -154,6 +155,16 @@ public class BuildASTVisitor extends grammarsBaseVisitor<Node> {
         }
     }
 
+    @Override
+    public Node visitArrayType(grammarsParser.ArrayTypeContext ctx) {
+        return new ArrayType( (Type)ctx.typeSpecifier().accept(this) );
+    }
+
+    @Override
+    public Node visitNonArrayType(grammarsParser.NonArrayTypeContext ctx) {
+        return visit(ctx.nonArrayTypeSpecifier());
+    }
+
     /*
     @Override
     public Node visitArrayType(grammarsParser.ArrayTypeContext ctx) {
@@ -165,7 +176,9 @@ public class BuildASTVisitor extends grammarsBaseVisitor<Node> {
     public Node visitIf(grammarsParser.IfContext ctx) {
         ExprNode cond = (ExprNode) visit(ctx.ifStat().expr());
         StmtNode then = (StmtNode) visit(ctx.ifStat().stat(0));
-        StmtNode otherwise = (StmtNode) visit(ctx.ifStat().stat(1));
+        StmtNode otherwise = null;
+        if (ctx.ifStat().stat(1) != null)
+            otherwise = (StmtNode) visit(ctx.ifStat().stat(1));
         return new IfNode(cond, then, otherwise);
     }
 
@@ -265,6 +278,13 @@ public class BuildASTVisitor extends grammarsBaseVisitor<Node> {
         } else {
             return new FunctionCallNode(ctx.ID().getText(), null);
         }
+    }
+
+    @Override
+    public Node visitIndex(grammarsParser.IndexContext ctx) {
+        ExprNode name = (ExprNode)ctx.expr(0).accept(this);
+        ExprNode iter = (ExprNode)ctx.expr(1).accept(this);
+        return new ArefNode(name, iter);
     }
 
     @Override

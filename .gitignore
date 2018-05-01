@@ -3,3 +3,4 @@ Parser/*
 bin/*
 out/*
 *.class
+.idea/*

@@ -10,10 +10,13 @@ import Symbols.*;
 
 public class SemanticTest {
     static public void main(String[] args) throws Exception{
+        /*
         String pos = "/home/yanhongyu/Git/homework/Compiler/Parser/"
                 + "src/test/parser/sample2.mm";
+        pos = "/home/yanhongyu/Git/homework/Compiler/test/semantic/testcase_638.txt";
         FileInputStream fin = new FileInputStream(pos);
-        Scanner sc = new Scanner(fin);
+        */
+        Scanner sc = new Scanner(System.in);
         String expr = "";
         while (sc.hasNextLine()) {
             expr = expr + '\n' + sc.nextLine();
@@ -27,7 +30,7 @@ public class SemanticTest {
 
         BuildASTVisitor vst = new BuildASTVisitor();
         AST root = (AST)vst.visit(tree);
-        PrintASTVisitor<Void> printer = new PrintASTVisitor<Void>(System.out);
+        PrintASTVisitor<Void> printer = new PrintASTVisitor<Void>(System.err);
         printer.visit(root);
         root.scope = new GlobalScope();
 

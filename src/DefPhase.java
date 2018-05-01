@@ -13,9 +13,6 @@ public class DefPhase<T> implements ASTVisitor<T> {
         for (int i = 0; i < node.classes.size(); i++) {
             visit(node.classes.get(i));
         }
-        for (int i = 0; i < node.vars.size(); i++) {
-            visit(node.vars.get(i));
-        }
         for (int i = 0; i < node.funcs.size(); i++) {
             visit(node.funcs.get(i));
         }
@@ -39,10 +36,6 @@ public class DefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(BlockNode blockNode) {
-        if (blockNode.stmts == null) return null;
-        for (int i = 0; i < blockNode.stmts.size(); i++) {
-            blockNode.stmts.get(i).accept(this);
-        }
         return null;
     }
 
@@ -59,18 +52,6 @@ public class DefPhase<T> implements ASTVisitor<T> {
     @Override
     public T visit(ClassNode classNode) {
         currentScope.define(classNode.name, new ClassTypeSymbol(classNode.name));
-        classNode.scope = new LocalScope(classNode.name, currentScope);
-        currentScope = classNode.scope;
-        if (classNode.memberv != null) {
-            for (int i = 0; i < classNode.memberv.size(); i++) {
-                classNode.memberv.get(i).accept(this);
-            }
-        }
-        if (classNode.memberf != null) {
-            for (int i = 0; i < classNode.memberf.size(); i++) {
-                classNode.memberf.get(i).accept(this);
-            }
-        }
         return null;
     }
 
@@ -104,24 +85,7 @@ public class DefPhase<T> implements ASTVisitor<T> {
         TypeSymbol returnTypeSymbol = (TypeSymbol) currentScope.resolve(funcDeclNode.type);
 //        TypeSymbol returnTypeSymbol = (TypeSymbol) funcDeclNode.type.accept(this);
         FunctionTypeSymbol funcSymbol = new FunctionTypeSymbol(returnTypeSymbol, funcDeclNode.name);
-        if (funcDeclNode.parameters != null) {
-            for (int i = 0; i < funcDeclNode.parameters.size(); i++) {
-                VariableDecl vard = funcDeclNode.parameters.get(i);
-                TypeSymbol typeSymbol = (TypeSymbol) vard.type.accept(this);
-                funcSymbol.addArg(typeSymbol, vard.name);
-            }
-        }
         currentScope.define(funcDeclNode.name, funcSymbol);
-
-        funcDeclNode.scope = new LocalScope(funcDeclNode.name, currentScope);
-        currentScope = funcDeclNode.scope;
-        if (funcDeclNode.parameters != null) {
-            for (int i = 0; i < funcDeclNode.parameters.size(); i++) {
-                funcDeclNode.parameters.get(i).accept(this);
-            }
-        }
-        funcDeclNode.body.accept(this);
-        currentScope = currentScope.getEnclosingScope();
         return null;
     }
 
@@ -202,8 +166,6 @@ public class DefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(VariableDecl variableDecl) {
-        TypeSymbol typeSymbol = (TypeSymbol) currentScope.resolve(variableDecl.type);
-        currentScope.define(variableDecl.name, typeSymbol);
         return null;
     }
 

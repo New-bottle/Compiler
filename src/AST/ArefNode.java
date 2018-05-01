@@ -2,9 +2,9 @@ package AST;
 
 // array ref : a[i]
 public class ArefNode extends LHSNode {
-    public String name;
+    public ExprNode name;
     public ExprNode iter;
-    public ArefNode(String name, ExprNode iter) {
+    public ArefNode(ExprNode name, ExprNode iter) {
         this.name = name;
         this.iter = iter;
     }

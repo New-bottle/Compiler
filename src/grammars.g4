@@ -25,7 +25,7 @@ comp       : funcDecl                                 # globalFuncDecl
            ;
 funcDecl   : typeSpecifier ID '(' parameterList? ')' blockStatement;
 
-parameterList : parameter + ;
+parameterList : parameter (',' parameter)* ;
 parameter : typeSpecifier ID ;
 
 varDecl    : typeSpecifier ID ('=' expr)? ';' ;
@@ -55,15 +55,16 @@ jumpStatement
            ;
 
 nonArrayTypeSpecifier
-           : symbol = INT_ID
-           | symbol = BOOL_ID
-           | symbol = STR_ID
-           | symbol = VOID_ID
-           | symbol = ID
+           : type = INT_ID
+           | type = BOOL_ID
+           | type = STR_ID
+           | type = VOID_ID
+           | type = ID
            ;
 
-typeSpecifier : typeSpecifier '['']'  # arrayType
-           | nonArrayTypeSpecifier  # nonArrayType
+typeSpecifier
+           : typeSpecifier '['']'  # arrayType
+           | nonArrayTypeSpecifier # nonArrayType
            ;
 /*
 symbol       : builtInType | arrayType | userType;
@@ -71,7 +72,7 @@ builtInType: BOOL_ID | INT_ID | STR_ID | VOID_ID ;
 userType   : ID                                  ;
 arrayType  : (builtInType|userType) ('['']')+    ;
 */
-ifStat     : IF_ID expr 'then' stat ('else' stat)? ;
+ifStat     : IF_ID '('expr')' stat ('else' stat)? ;
 forStat    : FOR_ID '(' declinit=varDecl
                         cond=expr? ';'
                         iter=expr? ')'
@@ -91,7 +92,7 @@ expr       : expr op=('++'|'--')               # PostfixIncDec
            | ID '(' exprList? ')'              # Call
            | expr '[' expr ']'                 # Index
            | expr '.' ID                       # MemberAccess
-           | expr '.' ID'('exprList?')'       # MemberFuncAccess
+           | expr '.' ID'('exprList?')'        # MemberFuncAccess
 
            | <assoc=right> op=('++'|'--') expr # UnaryExpr
            | <assoc=right> op=('+' | '-') expr # UnaryExpr
@@ -136,6 +137,7 @@ STRING: '"' (ESC|.)*? '"' ;
 fragment ESC   : '\\"' | '\\\\' ; // 2-char sequences \" and \\
 
 LINE_COMMENT : '//' .*? '\n' -> skip ;
+BlockComment : '/*' .*? '*/' -> skip ;
 WS : [ \t\n\r]+ -> skip;
 NEWLINE    :  '\r' ? '\n';
 

@@ -1,7 +1,6 @@
 package Symbols;
 
-import AST.ClassType;
-import AST.Type;
+import AST.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,20 +23,22 @@ public class SymbolTable implements Scope {
     public Scope getEnclosingScope() { return enclosingScope; }
     public void define(String name, Symbol sym) {
         if (symbols.containsKey(name)) {
-            throw new RuntimeException("Symbol name has been used."); // TODO RE or ParseError?
+            throw new RuntimeException("Symbol name has been used : " + name); // TODO RE or ParseError?
         }
         symbols.put(name, sym);
     }
     public Symbol resolve(String name) {
         if (symbols.containsKey(name)) return symbols.get(name);
         else if (enclosingScope != null) return enclosingScope.resolve(name);
-        else throw new RuntimeException("Not have this symbol.");
+        else throw new RuntimeException("Not have this symbol : " + name);
     }
 
     @Override
     public Symbol resolve(Type type) {
         if (type.getType() == Symbol.Types.STRUCT) {
             return resolve(((ClassType)type).name);
+        } else if (type.getType() == Symbol.Types.ARRAY){
+            return resolve(((ArrayType)type).baseType);
         } else {
             return resolve(type.getType().name());
         }

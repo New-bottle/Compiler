@@ -8,7 +8,7 @@ import java.util.Scanner;
 
 public class BuildAST {
     public static void main(String[] args) throws Exception {
-        String pos = "/home/yanhongyu/Git/homework/Compiler/Parser/"
+        String pos = "/home/yanhongyu/Git/homework/Parser/"
                      + "src/test/parser/sample2.mm";
         FileInputStream fin = new FileInputStream(pos);
         Scanner sc = new Scanner(fin);
