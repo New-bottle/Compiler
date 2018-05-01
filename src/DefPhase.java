@@ -40,6 +40,11 @@ public class DefPhase<T> implements ASTVisitor<T> {
     }
 
     @Override
+    public T visit(BoolLiteralNode boolLiteralNode) {
+        return null;
+    }
+
+    @Override
     public T visit(BreakNode breakNode) {
         return null;
     }
@@ -126,6 +131,11 @@ public class DefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(NewExpr newExpr) {
+        return null;
+    }
+
+    @Override
+    public T visit(NullNode nullNode) {
         return null;
     }
 

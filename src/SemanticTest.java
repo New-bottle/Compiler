@@ -3,6 +3,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.Scanner;
 
 import AST.*;
@@ -14,15 +15,9 @@ public class SemanticTest {
         String pos = "/home/yanhongyu/Git/homework/Compiler/Parser/"
                 + "src/test/parser/sample2.mm";
         pos = "/home/yanhongyu/Git/homework/Compiler/test/semantic/testcase_638.txt";
-        FileInputStream fin = new FileInputStream(pos);
         */
-        Scanner sc = new Scanner(System.in);
-        String expr = "";
-        while (sc.hasNextLine()) {
-            expr = expr + '\n' + sc.nextLine();
-        }
-
-        ANTLRInputStream input = new ANTLRInputStream(expr);
+        InputStream fin = new FileInputStream("program.txt");
+        ANTLRInputStream input = new ANTLRInputStream(fin);
         grammarsLexer lexer = new grammarsLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         grammarsParser parser = new grammarsParser(tokens);

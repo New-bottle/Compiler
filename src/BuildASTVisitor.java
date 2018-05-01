@@ -370,13 +370,19 @@ public class BuildASTVisitor extends grammarsBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitCONST(grammarsParser.CONSTContext ctx) {
-        return new IntegerLiteralNode(ctx.INT().getText());
+    public Node visitLiteral(grammarsParser.LiteralContext ctx) {
+        return visit(ctx.constant());
     }
 
     @Override
-    public Node visitSTR(grammarsParser.STRContext ctx) {
-        return new StringLiteralNode(ctx.STRING().getText());
+    public Node visitConstant(grammarsParser.ConstantContext ctx) {
+        switch (ctx.type.getType()) {
+            case grammarsParser.IntLiteral : return new IntegerLiteralNode(ctx.type.getText());
+            case grammarsParser.STRING : return new StringLiteralNode(ctx.type.getText());
+            case grammarsParser.NULL_ID: return new NullNode();
+            case grammarsParser.BoolLiteral: return new BoolLiteralNode(ctx.type.getText());
+            default: throw new RuntimeException("Wrong literal symbol.");
+        }
     }
 
     @Override
