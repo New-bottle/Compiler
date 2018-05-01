@@ -3,7 +3,7 @@ package Symbols;
 import AST.Type;
 
 public interface Scope {
-//    Map<String, preSymbol> symbols = new HashMap<String, preSymbol>();
+//    Map<String, Symbol> symbols = new HashMap<String, Symbol>();
     public String getScopeName();       // do I have a name?
     public Scope getEnclosingScope();   // am I nested in another?
     public void define(String name, Symbol symbol);     // define sym in this scope

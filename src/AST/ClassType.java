@@ -17,4 +17,8 @@ public class ClassType extends Type {
         visitor.visit(this);
         return null;
     }
+
+    public boolean equals(ClassType rhs) {
+        return name == rhs.name;
+    }
 }
