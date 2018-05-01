@@ -2,11 +2,15 @@ import AST.*;
 import Symbols.*;
 import Exception.*;
 
+import static Symbols.Symbol.getType;
+
 public class RefPhase<T> implements ASTVisitor<T> {
     public Scope currentScope;
+    public int inloop;
 
     public RefPhase (Scope currentScope) {
         this.currentScope = currentScope;
+        inloop = 0;
     }
 
     @Override
@@ -37,18 +41,19 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(BinaryOpNode binaryOpNode) {
+        binaryOpNode.left.accept(this);
+        binaryOpNode.right.accept(this);
         if (!binaryOpNode.left.exprType.equals(binaryOpNode.right.exprType)) {
             String err = '(' + binaryOpNode.left.exprType.getType().name() + " "
-                       + binaryOpNode.right.exprType.getType().name() + ')';
+                    + binaryOpNode.right.exprType.getType().name() + ')';
             throw new TypeError("BinaryOp : " + err);
         }
         if (!binaryOpNode.left.exprType.equals(Symbol.Types.INT) &&
-            !binaryOpNode.left.exprType.equals(Symbol.Types.STRING) &&
-            !binaryOpNode.left.exprType.equals(Symbol.Types.BOOL)) {
+                !binaryOpNode.left.exprType.equals(Symbol.Types.STRING) &&
+                !binaryOpNode.left.exprType.equals(Symbol.Types.BOOL)) {
             throw new TypeError("BinaryOp computing non-builtin type.");
         }
-        visit(binaryOpNode.left);
-        visit(binaryOpNode.right);
+        binaryOpNode.exprType = binaryOpNode.left.exprType;
         return null;
     }
 
@@ -62,6 +67,9 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(BreakNode breakNode) {
+        if (inloop == 0) {
+            throw new JumpError("Not in a loop, can't break.");
+        }
         return null;
     }
 
@@ -95,6 +103,9 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(ContinueNode continueNode) {
+        if (inloop == 0) {
+            throw new JumpError("Not in a loop, can't continue,");
+        }
         return null;
     }
 
@@ -105,6 +116,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(ExprStmtNode exprStmtNode) {
+        exprStmtNode.expr.accept(this);
         return null;
     }
 
@@ -112,14 +124,21 @@ public class RefPhase<T> implements ASTVisitor<T> {
     public T visit(ForNode forNode) {
         if (forNode.initWithDecl != null) visit(forNode.initWithDecl);
         else visit(forNode.init);
+        inloop ++;
         visit(forNode.cond);
         visit(forNode.iter);
         visit(forNode.body);
+        inloop --;
         return null;
     }
 
     @Override
     public T visit(FuncDeclNode funcDeclNode) {
+        if (currentScope.getEnclosingScope() != null) { // class member func
+            TypeSymbol returnTypeSymbol = (TypeSymbol) currentScope.resolve(funcDeclNode.type);
+            FunctionTypeSymbol funcSymbol = new FunctionTypeSymbol(returnTypeSymbol, funcDeclNode.name);
+            currentScope.define(funcDeclNode.name, funcSymbol);
+        }
         FunctionTypeSymbol funcSymbol =
                 (FunctionTypeSymbol)currentScope.resolve(funcDeclNode.name);
         funcDeclNode.scope = new LocalScope(funcDeclNode.name, currentScope);
@@ -157,6 +176,9 @@ public class RefPhase<T> implements ASTVisitor<T> {
     @Override
     public T visit(IfNode ifNode) {
         visit(ifNode.cond);
+        if (ifNode.cond.exprType.getType() != Symbol.Types.BOOL) {
+            throw new TypeError("Need a boolean expression but got a : "+ifNode.cond.exprType.getType().name());
+        }
         visit(ifNode.then);
         visit(ifNode.otherwise);
         return null;
@@ -174,6 +196,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(MemberNode memberNode) {
+        memberNode.expr.accept(this);
         ClassTypeSymbol classTypeSymbol =
                 (ClassTypeSymbol)currentScope.resolve(memberNode.expr.exprType);
         try {
@@ -242,7 +265,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
     @Override
     public T visit(VariableDecl variableDecl) {
         TypeSymbol typeSymbol = (TypeSymbol) currentScope.resolve(variableDecl.type);
-        currentScope.define(variableDecl.name, typeSymbol);
+        currentScope.define(variableDecl.name, new VariableSymbol(typeSymbol, variableDecl.name));
         return null;
     }
 
@@ -250,11 +273,19 @@ public class RefPhase<T> implements ASTVisitor<T> {
     public T visit(VariableNode variableNode) {
         if (!(currentScope.resolve(variableNode.name) instanceof VariableSymbol))
             throw new TypeError("This symbol is not a var : " + variableNode.name);
+        variableNode.exprType = getType(((VariableSymbol) currentScope.resolve(variableNode.name)).returntype);
         return null;
     }
 
     @Override
     public T visit(WhileNode whileNode) {
+        inloop ++;
+        whileNode.cond.accept(this);
+        if (whileNode.cond.exprType.getType() != Symbol.Types.BOOL) {
+            throw new TypeError("Need a boolean expression but got a : "+whileNode.cond.exprType.getType().name());
+        }
+        visit(whileNode.body);
+        inloop --;
         return null;
     }
 }
