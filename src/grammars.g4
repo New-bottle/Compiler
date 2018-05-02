@@ -119,7 +119,7 @@ expr       : expr op=('++'|'--')               # PostfixIncDec
            | '(' expr ')'                      # Parens
            ;
 
-creator    : nonArrayTypeSpecifier ('[' expr ']')+ ('['']')+  # creatorError
+creator    : nonArrayTypeSpecifier ('[' expr ']')+ ('['']')+ ('['expr']')+  # creatorError
            | nonArrayTypeSpecifier ('[' expr ']')+ ('['']')*  # creatorArray
            | nonArrayTypeSpecifier                            # creatorNonArray
            ;
@@ -129,6 +129,10 @@ constant   : type=IntLiteral
            | type=NULL_ID
            | type=BoolLiteral
            ;
+
+BoolLiteral : TRUE_VAL
+            | FALSE_VAL
+            ;
 
 ID         : ID_LETTER ( ID_LETTER | DIGIT | UDL)* ; // From C language
 
@@ -177,8 +181,4 @@ DSUB   : '--' ;
 
 LBracket: '[' ;
 RBracket: ']' ;
-
-BoolLiteral : TRUE_VAL
-            | FALSE_VAL
-            ;
 

@@ -46,7 +46,7 @@ public class BuildASTVisitor extends grammarsBaseVisitor<Node> {
 
     @Override
     public Node visitFuncDecl(grammarsParser.FuncDeclContext ctx) {
-        Type type = (Type)visit(ctx.typeSpecifier());
+        Type type = (Type)(ctx.typeSpecifier()).accept(this);
         String name = ctx.ID().getText();
         List<VariableDecl> parameters = new ArrayList<VariableDecl>();
         StmtNode body = (StmtNode)visit(ctx.blockStatement());
@@ -402,12 +402,12 @@ public class BuildASTVisitor extends grammarsBaseVisitor<Node> {
         List<ExprNode> dim = null;
         if (ctx.expr() != null) {
             dim = new ArrayList<ExprNode>();
-            List<grammarsParser.ExprContext> tmp = new ArrayList<>();
+            List<grammarsParser.ExprContext> tmp = ctx.expr();
             for (int i = 0; i < tmp.size(); i++) {
-                dim.add((ExprNode)visit(tmp.get(i)));
+                dim.add((ExprNode)(tmp.get(i)).accept(this));
             }
         }
-        List<SourcePosition> posDim = null;
+        List<SourcePosition> posDim = new ArrayList<SourcePosition>();
         int unspecified = ctx.getTokens(grammarsParser.LBracket).size() - ctx.expr().size();
         for (int i = 0; i < unspecified; i++) {
             dim.add(null);

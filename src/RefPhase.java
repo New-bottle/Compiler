@@ -29,7 +29,12 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(ArefNode arefNode) {
-        TypeSymbol typeSymbol = (TypeSymbol) currentScope.resolve(arefNode.name.exprType);
+        arefNode.name.accept(this);
+        if (!(currentScope.resolve(arefNode.name.exprType) instanceof ArraySymbol)) {
+            throw new TypeError(arefNode.name.toString() + " is not an array.");
+        }
+//        ArraySymbol arraySymbol = (ArraySymbol) currentScope.resolve(arefNode.name.exprType);
+        arefNode.exprType = ((ArrayType)arefNode.name.exprType).baseType;
         return null;
     }
 
@@ -43,17 +48,28 @@ public class RefPhase<T> implements ASTVisitor<T> {
     public T visit(BinaryOpNode binaryOpNode) {
         binaryOpNode.left.accept(this);
         binaryOpNode.right.accept(this);
-        if (!binaryOpNode.left.exprType.equals(binaryOpNode.right.exprType)) {
-            String err = '(' + binaryOpNode.left.exprType.getType().name() + " "
-                    + binaryOpNode.right.exprType.getType().name() + ')';
-            throw new TypeError("BinaryOp : " + err);
+
+        if (binaryOpNode.op == BinaryOpNode.BinaryOp.ASSIGN) {
+            if (!binaryOpNode.left.exprType.equals(binaryOpNode.right.exprType)) {
+                if (binaryOpNode.right.exprType != null) {
+                    String err = '(' + binaryOpNode.left.exprType.getType().name() + " " + binaryOpNode.op.name() + " "
+                            + binaryOpNode.right.exprType.getType().name() + ')';
+                    throw new TypeError("BinaryOp : " + err);
+                }
+            }
+        } else {
+            if (!binaryOpNode.left.exprType.equals(binaryOpNode.right.exprType)) {
+                String err = '(' + binaryOpNode.left.exprType.getType().name() + " " + binaryOpNode.op.name() + " "
+                        + binaryOpNode.right.exprType.getType().name() + ')';
+                throw new TypeError("BinaryOp : " + err);
+            }
+            if (!binaryOpNode.left.exprType.getType().equals(Symbol.Types.INT) &&
+                    !binaryOpNode.left.exprType.getType().equals(Symbol.Types.STRING) &&
+                    !binaryOpNode.left.exprType.getType().equals(Symbol.Types.BOOL)) {
+                throw new TypeError("BinaryOp computing non-builtin type.");
+            }
+            binaryOpNode.exprType = binaryOpNode.left.exprType;
         }
-        if (!binaryOpNode.left.exprType.getType().equals(Symbol.Types.INT) &&
-                !binaryOpNode.left.exprType.getType().equals(Symbol.Types.STRING) &&
-                !binaryOpNode.left.exprType.getType().equals(Symbol.Types.BOOL)) {
-            throw new TypeError("BinaryOp computing non-builtin type.");
-        }
-        binaryOpNode.exprType = binaryOpNode.left.exprType;
         return null;
     }
 
@@ -67,6 +83,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(BoolLiteralNode boolLiteralNode) {
+        boolLiteralNode.exprType = new BuiltInType(Symbol.Types.BOOL);
         return null;
     }
 

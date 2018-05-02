@@ -73,11 +73,12 @@ public class PrintASTVisitor<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(BoolLiteralNode boolLiteralNode) {
+        out.print("<BoolLiteral: "+boolLiteralNode.name+">");
         return null;
     }
 
     public T visit(BreakNode breakNode) {
-        out.print(indent()+"Break");
+        out.println(indent()+"Break");
         return null;
     }
 
@@ -110,7 +111,7 @@ public class PrintASTVisitor<T> implements ASTVisitor<T> {
     }
 
     public T visit(ContinueNode continueNode) {
-        out.print(indent()+"Continue");
+        out.println(indent()+"Continue");
         return null;
     }
 
@@ -231,7 +232,7 @@ public class PrintASTVisitor<T> implements ASTVisitor<T> {
         newExpr.type.accept(this);
         if (newExpr.dim != null) {
             out.print("dims:");
-            for (int i = 0; i < newExpr.dim.size(); i++) {
+            for (int i = 0; i < newExpr.dim.size()-newExpr.posDim.size(); i++) {
                 newExpr.dim.get(i).accept(this);
                 out.print(" ");
             }
@@ -242,6 +243,7 @@ public class PrintASTVisitor<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(NullNode nullNode) {
+        out.print("null");
         return null;
     }
 
