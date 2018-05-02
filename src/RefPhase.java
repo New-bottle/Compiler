@@ -67,6 +67,9 @@ public class RefPhase<T> implements ASTVisitor<T> {
         binaryOpNode.right.accept(this);
 
         if (binaryOpNode.op == BinaryOpNode.BinaryOp.ASSIGN) {
+            if (!binaryOpNode.left.isLvalue) {
+                throw new AssignError(binaryOpNode.left.toString() +" is not a Lvalue.");
+            }
             if (!binaryOpNode.left.exprType.equals(binaryOpNode.right.exprType)) {
                 if (binaryOpNode.right.exprType != null) {
                     String err = '(' + binaryOpNode.left.exprType.getType().name() + " " + binaryOpNode.op.name() + " "
@@ -321,6 +324,9 @@ public class RefPhase<T> implements ASTVisitor<T> {
     @Override
     public T visit(PostOpNode postOpNode) {
         postOpNode.expr.accept(this);
+        if (!postOpNode.expr.isLvalue) {
+            throw new AssignError("PostOp " + postOpNode.expr.toString()+" is not a L value.");
+        }
         postOpNode.exprType = postOpNode.expr.exprType;
         return null;
     }
@@ -371,6 +377,27 @@ public class RefPhase<T> implements ASTVisitor<T> {
     @Override
     public T visit(UnaryExprNode unaryExprNode) {
         unaryExprNode.expr.accept(this);
+        switch (unaryExprNode.op) {
+            case ADD: case SUB:
+                if (!unaryExprNode.expr.isLvalue) {
+                    throw new AssignError("Can't do Prev ++/-- to a non-Lvalue.");
+                }
+                if (unaryExprNode.expr.exprType.getType() != Symbol.Types.INT) {
+                    throw new TypeError("Can't do Prev ++/-- on a non-INT.");
+                }
+                break;
+            case NEG:case POS:case BNOT:
+                if (unaryExprNode.expr.exprType.getType() != Symbol.Types.INT) {
+                    throw new TypeError("Can't do Prev +/-/~ on a non-INT.");
+                }
+                break;
+            case LNOT:
+                if (unaryExprNode.expr.exprType.getType() != Symbol.Types.BOOL) {
+                    throw new TypeError("Can't do Prev ! on a non-BOOL.");
+                }
+                break;
+        }
+        unaryExprNode.isLvalue = false;
         unaryExprNode.exprType = unaryExprNode.expr.exprType;
         return null;
     }

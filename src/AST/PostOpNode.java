@@ -6,6 +6,7 @@ public class PostOpNode extends UnaryOpNode {
     public PostOpNode(ExprNode expr, UnaryOp op) {
         this.expr = expr;
         this.op = op;
+        this.isLvalue = false;
     }
 
     public Object accept(ASTVisitor visitor) {

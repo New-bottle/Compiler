@@ -7,6 +7,7 @@ public class MemberNode extends ExprNode {
     public MemberNode(ExprNode expr, String name) {
         this.expr = expr;
         this.name = name;
+        this.isLvalue = true;
     }
 
     public Object accept(ASTVisitor visitor) {
