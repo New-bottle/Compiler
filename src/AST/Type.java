@@ -6,6 +6,6 @@ public abstract class Type extends Node {
     public abstract Symbol.Types getType();
 
     public boolean equals(Type rhs) {
-        return getType() == rhs.getType();
+        return rhs == null || getType() == rhs.getType();
     }
 }

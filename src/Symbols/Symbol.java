@@ -1,5 +1,6 @@
 package Symbols;
 
+import AST.ArrayType;
 import AST.BuiltInType;
 import AST.ClassType;
 import AST.Type;
@@ -17,7 +18,8 @@ public abstract class Symbol {
             case BOOL    :    return new BuiltInType(Types.BOOL);
             case INT     :    return new BuiltInType(Types.INT);
             case STRING  :    return new BuiltInType(Types.STRING);
-            case ARRAY   :    throw new TypeError("Array can't be used in expression.");
+            case ARRAY   :    return new ArrayType(getType(((ArraySymbol)tmp).returntype));
+                //throw new TypeError("Array can't be used in expression.");
             case FUNCTION:    return getType(((FunctionTypeSymbol)tmp).returnType);
             case STRUCT  :    return new ClassType(((ClassTypeSymbol)tmp).name);
             case VOID    :    return new BuiltInType(Types.VOID);

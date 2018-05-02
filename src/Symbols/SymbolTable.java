@@ -1,6 +1,7 @@
 package Symbols;
 
 import AST.*;
+import com.sun.xml.internal.bind.v2.model.core.BuiltinLeafInfo;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,13 +11,6 @@ public class SymbolTable implements Scope {
     private Scope enclosingScope;
     public SymbolTable(Scope enclosingScope) {
         this.enclosingScope = enclosingScope;
-        initTypeSystem();
-    }
-    protected void initTypeSystem() {
-        define("INT", new BuiltInTypeSymbol(Symbol.Types.INT));
-        define("BOOL", new BuiltInTypeSymbol(Symbol.Types.BOOL));
-        define("STRING", new BuiltInTypeSymbol(Symbol.Types.STRING));
-        define("VOID", new BuiltInTypeSymbol(Symbol.Types.VOID));
     }
     // Satisfy Scope interface
     public String getScopeName() { return "global"; }
@@ -38,7 +32,7 @@ public class SymbolTable implements Scope {
         if (type.getType() == Symbol.Types.STRUCT) {
             return resolve(((ClassType)type).name);
         } else if (type.getType() == Symbol.Types.ARRAY){
-            return resolve(((ArrayType)type).baseType);
+            return new ArraySymbol((TypeSymbol)resolve(((ArrayType)type).baseType));
         } else {
             return resolve(type.getType().name());
         }
