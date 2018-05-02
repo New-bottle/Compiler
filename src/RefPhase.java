@@ -90,7 +90,12 @@ public class RefPhase<T> implements ASTVisitor<T> {
                     !binaryOpNode.left.exprType.getType().equals(Symbol.Types.BOOL)) {
                 throw new TypeError("BinaryOp computing non-builtin type.");
             }
-            binaryOpNode.exprType = binaryOpNode.left.exprType;
+            switch (binaryOpNode.op) {
+                case EQ: case GE: case GT:case LE:case LT:case NE:case LAND:case LOR:
+                    binaryOpNode.exprType = new BuiltInType(Symbol.Types.BOOL); break;
+                default:
+                    binaryOpNode.exprType = binaryOpNode.left.exprType;
+            }
         }
         return null;
     }
@@ -210,7 +215,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
             for (int i = 0; i < funcDeclNode.parameters.size(); i++) {
                 VariableDecl vard = funcDeclNode.parameters.get(i);
                 TypeSymbol typeSymbol = (TypeSymbol) currentScope.resolve(vard.type);
-                currentScope.define(vard.name, typeSymbol);
+                currentScope.define(vard.name, new VariableSymbol(typeSymbol, vard.name));
                 funcSymbol.addArg(typeSymbol, vard.name);
             }
         }
@@ -260,7 +265,8 @@ public class RefPhase<T> implements ASTVisitor<T> {
             throw new TypeError("Need a boolean expression but got a : "+ifNode.cond.exprType.getType().name());
         }
         ifNode.then.accept(this);
-        ifNode.otherwise.accept(this);
+        if (ifNode.otherwise != null)
+            ifNode.otherwise.accept(this);
         return null;
     }
 
@@ -315,6 +321,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
     @Override
     public T visit(PostOpNode postOpNode) {
         postOpNode.expr.accept(this);
+        postOpNode.exprType = postOpNode.expr.exprType;
         return null;
     }
 
@@ -364,6 +371,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
     @Override
     public T visit(UnaryExprNode unaryExprNode) {
         unaryExprNode.expr.accept(this);
+        unaryExprNode.exprType = unaryExprNode.expr.exprType;
         return null;
     }
 
