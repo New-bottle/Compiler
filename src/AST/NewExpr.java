@@ -11,9 +11,10 @@ public class NewExpr extends ExprNode {
         this.type = type;
         this.dim = dim;
         this.posDim = posDim;
-        for (int i = 0; i < dim.size(); i++) {
-            type = new ArrayType(type);
-        }
+        if (dim != null)
+            for (int i = 0; i < dim.size(); i++) {
+                type = new ArrayType(type);
+            }
         this.exprType = type;
     }
 

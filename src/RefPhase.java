@@ -300,14 +300,24 @@ public class RefPhase<T> implements ASTVisitor<T> {
     @Override
     public T visit(MemberFuncNode memberFuncNode) {
         memberFuncNode.expr.accept(this);
-        ClassTypeSymbol classTypeSymbol =
-                (ClassTypeSymbol)currentScope.resolve(memberFuncNode.expr.exprType);
-        try {
-            classTypeSymbol.members.find(memberFuncNode.name);
-        } catch (RuntimeException e) {
-            throw new MemberError(classTypeSymbol.name+" don't have member func " + memberFuncNode.name);
+        Symbol sym = currentScope.resolve(memberFuncNode.expr.exprType);
+        if (sym instanceof ClassTypeSymbol) {
+            ClassTypeSymbol classTypeSymbol = (ClassTypeSymbol) sym;
+            try {
+                classTypeSymbol.members.find(memberFuncNode.name);
+            } catch (RuntimeException e) {
+                throw new MemberError(classTypeSymbol.name + " don't have member func " + memberFuncNode.name);
+            }
+            memberFuncNode.exprType = getType(classTypeSymbol.members.find(memberFuncNode.name));
+        } else {
+            ArraySymbol arraySymbol = (ArraySymbol) sym;
+            try {
+                arraySymbol.members.find(memberFuncNode.name);
+            } catch (RuntimeException e) {
+                throw new MemberError("Array don't have this member function " + memberFuncNode.name);
+            }
+            memberFuncNode.exprType = new BuiltInType(Symbol.Types.INT);
         }
-        memberFuncNode.exprType = getType(classTypeSymbol.members.find(memberFuncNode.name));
         return null;
     }
 
@@ -413,9 +423,15 @@ public class RefPhase<T> implements ASTVisitor<T> {
         if (variableDecl.init != null) {
             variableDecl.init.accept(this);
             if (!variableDecl.init.exprType.equals(variableDecl.type)) {
-                if (!((variableDecl.type.getType() == Symbol.Types.STRUCT ||
-                    variableDecl.type.getType() == Symbol.Types.ARRAY) &&
-                        variableDecl.init.exprType.getType() == Symbol.Types.NULL))
+                if (variableDecl.type.getType() == Symbol.Types.STRUCT) {
+                    if (((ClassType)variableDecl.type).name == "string")
+                        throw new TypeError("Initial expr's type doesn't match.");
+                    if (variableDecl.init.exprType.getType() != Symbol.Types.NULL)
+                        throw new TypeError("Initial expr's type doesn't match.");
+                } else if (variableDecl.type.getType() == Symbol.Types.ARRAY) {
+                    if (variableDecl.init.exprType.getType() != Symbol.Types.NULL)
+                        throw new TypeError("Initial expr's type doesn't match.");
+                } else
                     throw new TypeError("Initial expr's type doesn't match.");
             }
         }
