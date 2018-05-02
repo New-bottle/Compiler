@@ -65,6 +65,11 @@ public class RefPhase<T> implements ASTVisitor<T> {
                     String err = '(' + binaryOpNode.left.exprType.getType().name() + " " + binaryOpNode.op.name() + " "
                             + binaryOpNode.right.exprType.getType().name() + ')';
                     throw new TypeError("BinaryOp : " + err);
+                } else {
+                    if (!(binaryOpNode.left.exprType.getType() == Symbol.Types.STRUCT ||
+                        binaryOpNode.left.exprType.getType() == Symbol.Types.ARRAY)) {
+                        throw new TypeError("Can't assign null to a " + binaryOpNode.left.exprType.getType().name() + " variable.");
+                    }
                 }
             }
         } else {
@@ -302,6 +307,15 @@ public class RefPhase<T> implements ASTVisitor<T> {
     @Override
     public T visit(VariableDecl variableDecl) {
         TypeSymbol typeSymbol = (TypeSymbol) currentScope.resolve(variableDecl.type);
+        if (variableDecl.init != null) {
+            variableDecl.init.accept(this);
+            if (!variableDecl.init.exprType.equals(variableDecl.type)) {
+                if (!((variableDecl.init.exprType.getType() == Symbol.Types.STRUCT ||
+                    variableDecl.init.exprType.getType() == Symbol.Types.ARRAY) &&
+                        variableDecl.type.getType() == Symbol.Types.NULL))
+                    throw new TypeError("Initial expr's type doesn't match.");
+            }
+        }
         currentScope.define(variableDecl.name, new VariableSymbol(typeSymbol, variableDecl.name));
         return null;
     }
