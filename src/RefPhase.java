@@ -406,6 +406,9 @@ public class RefPhase<T> implements ASTVisitor<T> {
     public T visit(VariableDecl variableDecl) {
         variableDecl.type.accept(this);
         TypeSymbol typeSymbol = (TypeSymbol) currentScope.resolve(variableDecl.type);
+        if (typeSymbol.type == Symbol.Types.VOID) {
+            throw new TypeError("Can't make a variable of void.");
+        }
         if (variableDecl.init != null) {
             variableDecl.init.accept(this);
             if (!variableDecl.init.exprType.equals(variableDecl.type)) {
