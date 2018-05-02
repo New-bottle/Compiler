@@ -24,6 +24,16 @@ public class RefPhase<T> implements ASTVisitor<T> {
         for (int i = 0; i < node.funcs.size(); i++) {
             visit(node.funcs.get(i));
         }
+        Symbol main = currentScope.resolve("main");
+        if (!(main instanceof FunctionTypeSymbol)) {
+            throw new MainError("Program don't have a Main Function!");
+        }
+        if (((FunctionTypeSymbol)main).argNames.size() != 0) {
+            throw new MainError("Main Function shouldn't have args!");
+        }
+        if (!((FunctionTypeSymbol)main).returnType.equals(new BuiltInTypeSymbol(Symbol.Types.INT))) {
+            throw new MainError("Main Function should return an INT!");
+        }
         return null;
     }
 
@@ -144,12 +154,12 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(ForNode forNode) {
-        if (forNode.initWithDecl != null) visit(forNode.initWithDecl);
-        else visit(forNode.init);
+        if (forNode.initWithDecl != null) forNode.initWithDecl.accept(this);
+        else forNode.init.accept(this);
         inloop ++;
-        visit(forNode.cond);
-        visit(forNode.iter);
-        visit(forNode.body);
+        forNode.cond.accept(this);
+        forNode.iter.accept(this);
+        forNode.body.accept(this);
         inloop --;
         return null;
     }
@@ -197,12 +207,12 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(IfNode ifNode) {
-        visit(ifNode.cond);
+        ifNode.cond.accept(this);
         if (ifNode.cond.exprType.getType() != Symbol.Types.BOOL) {
             throw new TypeError("Need a boolean expression but got a : "+ifNode.cond.exprType.getType().name());
         }
-        visit(ifNode.then);
-        visit(ifNode.otherwise);
+        ifNode.then.accept(this);
+        ifNode.otherwise.accept(this);
         return null;
     }
 
@@ -254,7 +264,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(PostOpNode postOpNode) {
-        visit(postOpNode.expr);
+        postOpNode.expr.accept(this);
         return null;
     }
 
@@ -285,7 +295,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(UnaryExprNode unaryExprNode) {
-        visit(unaryExprNode.expr);
+        unaryExprNode.expr.accept(this);
         return null;
     }
 
@@ -311,7 +321,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
         if (whileNode.cond.exprType.getType() != Symbol.Types.BOOL) {
             throw new TypeError("Need a boolean expression but got a : "+whileNode.cond.exprType.getType().name());
         }
-        visit(whileNode.body);
+        whileNode.body.accept(this);
         inloop --;
         return null;
     }
