@@ -148,7 +148,7 @@ public class BuildASTVisitor extends grammarsBaseVisitor<Node> {
         switch (ctx.type.getType()) {
             case grammarsParser.INT_ID : return new BuiltInType(Symbol.Types.INT);
             case grammarsParser.BOOL_ID: return new BuiltInType(Symbol.Types.BOOL);
-            case grammarsParser.STR_ID : return new BuiltInType(Symbol.Types.STRING);
+            case grammarsParser.STR_ID : return new ClassType("string");
             case grammarsParser.VOID_ID: return new BuiltInType(Symbol.Types.VOID);
             case grammarsParser.ID     : return new ClassType(ctx.ID().getText());
             default: throw new RuntimeException("not matched in 'nonArrayTypeSpecifier'");

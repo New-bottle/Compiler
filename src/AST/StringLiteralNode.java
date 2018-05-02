@@ -6,7 +6,7 @@ public class StringLiteralNode extends LiteralNode {
     public String name;
     public StringLiteralNode(String name) {
         this.name = name;
-        this.exprType = new BuiltInType(Symbol.Types.STRING);
+        this.exprType = new ClassType("string");
     }
     public Object accept(ASTVisitor visitor) {
         visitor.visit(this);

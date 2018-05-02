@@ -158,7 +158,7 @@ public class PrintASTVisitor<T> implements ASTVisitor<T> {
         if (funcDeclNode.parameters != null) {
             right();
             for (int i = 0; i < funcDeclNode.parameters.size(); i++) {
-                visit(funcDeclNode.parameters.get(i));
+                funcDeclNode.parameters.get(i).accept(this);
             }
             left();
         }
@@ -220,7 +220,7 @@ public class PrintASTVisitor<T> implements ASTVisitor<T> {
         if (memberFuncNode.parameters != null) {
             right();
             for (int i = 0; i < memberFuncNode.parameters.size(); i++) {
-                visit(memberFuncNode.parameters.get(i));
+                memberFuncNode.parameters.get(i).accept(this);
             }
             left();
         }
@@ -255,7 +255,7 @@ public class PrintASTVisitor<T> implements ASTVisitor<T> {
     }
 
     public T visit(ReturnNode returnNode) {
-        out.print(indent()+"Return");
+        out.print(indent()+"Return ");
         if (returnNode.expr != null) {
             returnNode.expr.accept(this);
         }

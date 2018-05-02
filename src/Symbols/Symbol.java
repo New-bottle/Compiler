@@ -17,7 +17,7 @@ public abstract class Symbol {
         switch (tmp.type) {
             case BOOL    :    return new BuiltInType(Types.BOOL);
             case INT     :    return new BuiltInType(Types.INT);
-            case STRING  :    return new BuiltInType(Types.STRING);
+            case STRING  :    return new ClassType("string");
             case ARRAY   :    return new ArrayType(getType(((ArraySymbol)tmp).returntype));
                 //throw new TypeError("Array can't be used in expression.");
             case FUNCTION:    return getType(((FunctionTypeSymbol)tmp).returnType);
