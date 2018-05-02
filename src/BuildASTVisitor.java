@@ -109,12 +109,15 @@ public class BuildASTVisitor extends grammarsBaseVisitor<Node> {
 
     @Override
     public Node visitConstructor(grammarsParser.ConstructorContext ctx) {
-        ClassType type = new ClassType(ctx.parent.getText());
+//        ClassType type = new ClassType(ctx.parent.getText());
+        BuiltInType type = new BuiltInType(Symbol.Types.VOID);
         List<VariableDecl> parameters = new ArrayList<VariableDecl>();
-        List<grammarsParser.ParameterContext> tmp = ctx.parameterList().parameter();
-        StmtNode body = (StmtNode) visit(ctx.blockStatement());
-        for (int i = 0; i < tmp.size(); i++) {
-            parameters.add((VariableDecl)visit(tmp.get(i)));
+        StmtNode body = (StmtNode) ctx.blockStatement().accept(this);
+        if (ctx.parameterList() != null) {
+            List<grammarsParser.ParameterContext> tmp = ctx.parameterList().parameter();
+            for (int i = 0; i < tmp.size(); i++) {
+                parameters.add((VariableDecl)visit(tmp.get(i)));
+            }
         }
         return new FuncDeclNode(type, ctx.ID().getText(), parameters, body);
     }
@@ -235,7 +238,10 @@ public class BuildASTVisitor extends grammarsBaseVisitor<Node> {
 
     @Override
     public Node visitReturn(grammarsParser.ReturnContext ctx) {
-        return new ReturnNode((ExprNode)visit(ctx.expr()));
+        if (ctx.expr() != null)
+            return new ReturnNode((ExprNode)ctx.expr().accept(this));
+        else
+            return new ReturnNode(null);
     }
 
     /*
