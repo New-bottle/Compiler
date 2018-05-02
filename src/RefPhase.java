@@ -7,9 +7,11 @@ import static Symbols.Symbol.getType;
 public class RefPhase<T> implements ASTVisitor<T> {
     public Scope currentScope;
     public int inloop;
+    public Type funcReturnType;
 
     public RefPhase (Scope currentScope) {
         this.currentScope = currentScope;
+        this.funcReturnType = null;
         inloop = 0;
     }
 
@@ -171,6 +173,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(FuncDeclNode funcDeclNode) {
+        funcReturnType = funcDeclNode.type;
         if (currentScope.getEnclosingScope() != null) { // class member func
             TypeSymbol returnTypeSymbol = (TypeSymbol) currentScope.resolve(funcDeclNode.type);
             FunctionTypeSymbol funcSymbol = new FunctionTypeSymbol(returnTypeSymbol, funcDeclNode.name);
@@ -191,6 +194,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
         funcDeclNode.body.accept(this);
         currentScope = currentScope.getEnclosingScope();
+        funcReturnType = null;
         return null;
     }
 
@@ -275,6 +279,24 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(ReturnNode returnNode) {
+        if (funcReturnType == null) {
+            throw new JumpError("Not in a function, can't return!");
+        }
+        if (returnNode.expr == null) {
+            if (funcReturnType.getType() != Symbol.Types.NULL) {
+                throw new TypeError("Function return type error!");
+            }
+        } else {
+            returnNode.expr.accept(this);
+            if (!funcReturnType.equals(returnNode.expr.exprType)) {
+                if (funcReturnType.getType() == Symbol.Types.STRUCT ||
+                    funcReturnType.getType() == Symbol.Types.ARRAY) {
+                    if (returnNode.expr.exprType.getType() != Symbol.Types.NULL) {
+                        throw new TypeError("Function return type error!");
+                    }
+                }
+            }
+        }
         return null;
     }
 

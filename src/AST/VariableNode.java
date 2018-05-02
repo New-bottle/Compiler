@@ -1,7 +1,7 @@
 package AST;
 
 // variable expression
-public class VariableNode extends LHSNode {
+public class VariableNode extends ExprNode {
     public String name;
     public VariableNode (String name) {
         this.name = name;
