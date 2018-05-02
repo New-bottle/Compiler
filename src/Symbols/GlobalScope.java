@@ -19,8 +19,9 @@ public class GlobalScope extends SymbolTable {
 
         // String builtin function
         ClassTypeSymbol strSymbol = new ClassTypeSymbol("string");
+        strSymbol.members = new LocalScope("string", this);
         // 1. int String.length()
-        FunctionTypeSymbol length    = new FunctionTypeSymbol(intType, "length");
+        FunctionTypeSymbol length = new FunctionTypeSymbol(intType, "length");
         strSymbol.members.define("length", length);
         // 2. string String.substring(startpos, endpos)
         FunctionTypeSymbol substring = new FunctionTypeSymbol(strSymbol, "substring");

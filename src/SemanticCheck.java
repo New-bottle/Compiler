@@ -9,7 +9,7 @@ import java.util.Scanner;
 
 public class SemanticCheck {
     static public void main(String[] args) throws Exception{
-        String pos = "/home/yanhongyu/Git/homework/Compiler/test/semantic/testcase_688.txt";
+        String pos = "/home/yanhongyu/Git/homework/Compiler/test/semantic/testcase_781.txt";
         FileInputStream fin = new FileInputStream(pos);
         ANTLRInputStream input = new ANTLRInputStream(fin);
         grammarsLexer lexer = new grammarsLexer(input);

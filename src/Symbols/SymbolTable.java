@@ -4,6 +4,7 @@ import AST.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import Exception.*;
 
 public class SymbolTable implements Scope {
     Map<String, Symbol> symbols = new HashMap<String, Symbol>();
@@ -35,6 +36,12 @@ public class SymbolTable implements Scope {
         } else {
             return resolve(type.getType().name());
         }
+    }
+
+    @Override
+    public Symbol find(String name) {
+        if (symbols.containsKey(name)) return symbols.get(name);
+        else throw new MemberError("Don't have member : "+ name);
     }
 
     public String toString() { return getScopeName()+":"+symbols; }

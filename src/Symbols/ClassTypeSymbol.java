@@ -7,7 +7,7 @@ public class ClassTypeSymbol extends TypeSymbol {
     public ClassTypeSymbol(String name) {
         this.type = Types.STRUCT;
         this.name = name;
-        this.members = new SymbolTable(null);
+        this.members = null;
     }
     @Override
     public String toString() {
