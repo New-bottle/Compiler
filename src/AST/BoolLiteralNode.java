@@ -6,6 +6,7 @@ public class BoolLiteralNode extends LiteralNode{
     public BoolLiteralNode(String s) {
         this.name = s;
         val = (s == "true");
+        this.isLvalue = false;
     }
 
     @Override
