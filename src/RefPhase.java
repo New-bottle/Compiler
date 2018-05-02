@@ -423,9 +423,15 @@ public class RefPhase<T> implements ASTVisitor<T> {
         if (variableDecl.init != null) {
             variableDecl.init.accept(this);
             if (!variableDecl.init.exprType.equals(variableDecl.type)) {
-                if (!((variableDecl.type.getType() == Symbol.Types.STRUCT ||
-                    variableDecl.type.getType() == Symbol.Types.ARRAY) &&
-                        variableDecl.init.exprType.getType() == Symbol.Types.NULL))
+                if (variableDecl.type.getType() == Symbol.Types.STRUCT) {
+                    if (((ClassType)variableDecl.type).name == "string")
+                        throw new TypeError("Initial expr's type doesn't match.");
+                    if (variableDecl.init.exprType.getType() != Symbol.Types.NULL)
+                        throw new TypeError("Initial expr's type doesn't match.");
+                } else if (variableDecl.type.getType() == Symbol.Types.ARRAY) {
+                    if (variableDecl.init.exprType.getType() != Symbol.Types.NULL)
+                        throw new TypeError("Initial expr's type doesn't match.");
+                } else
                     throw new TypeError("Initial expr's type doesn't match.");
             }
         }
