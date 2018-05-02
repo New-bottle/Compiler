@@ -8,11 +8,13 @@ public class RefPhase<T> implements ASTVisitor<T> {
     public Scope currentScope;
     public int inloop;
     public Type funcReturnType;
+    public boolean newBlockScope;
 
     public RefPhase (Scope currentScope) {
         this.currentScope = currentScope;
         this.funcReturnType = null;
         inloop = 0;
+        newBlockScope = true;
     }
 
     @Override
@@ -52,6 +54,9 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(ArrayType arrayType) {
+        if (arrayType.baseType.getType() == Symbol.Types.VOID) {
+            throw new TypeError("Can't make array of VOID.");
+        }
         currentScope.resolve(arrayType.baseType);
         return null;
     }
@@ -92,8 +97,20 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(BlockNode blockNode) {
+        boolean built = false;
+        if (newBlockScope == true) {
+            blockNode.scope = new LocalScope("Block", currentScope);
+            currentScope = blockNode.scope;
+            built = true;
+        } else {
+            newBlockScope = true;
+        }
+
         for (int i = 0; i < blockNode.stmts.size(); i++) {
             blockNode.stmts.get(i).accept(this);
+        }
+        if (built) {
+            currentScope = currentScope.getEnclosingScope();
         }
         return null;
     }
@@ -161,18 +178,24 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(ForNode forNode) {
-        if (forNode.initWithDecl != null) forNode.initWithDecl.accept(this);
+        if (forNode.initWithDecl != null) {
+            newBlockScope = false;
+            forNode.initWithDecl.accept(this);
+        }
         else forNode.init.accept(this);
         inloop ++;
         forNode.cond.accept(this);
         forNode.iter.accept(this);
         forNode.body.accept(this);
         inloop --;
+        if (forNode.initWithDecl != null)
+            newBlockScope = true;
         return null;
     }
 
     @Override
     public T visit(FuncDeclNode funcDeclNode) {
+        newBlockScope = false;
         funcReturnType = funcDeclNode.type;
         if (currentScope.getEnclosingScope() != null) { // class member func
             TypeSymbol returnTypeSymbol = (TypeSymbol) currentScope.resolve(funcDeclNode.type);
@@ -200,12 +223,28 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(FunctionCallNode functionCallNode) {
-        if (currentScope.resolve(functionCallNode.name) == null) {
+        Symbol sym = currentScope.resolve(functionCallNode.name);
+        if (sym == null) {
             throw new RuntimeException("FunctionCall failed: No such symbol.");
         }
-        if (currentScope.resolve(functionCallNode.name).type != Symbol.Types.FUNCTION) {
+        if (sym.type != Symbol.Types.FUNCTION) {
             throw new RuntimeException("FunctionCall failed: Symbol is not a function.");
         }
+        FunctionTypeSymbol funcSymbol = (FunctionTypeSymbol) sym;
+        if (functionCallNode.parameters != null) {
+            for (int i = 0; i < functionCallNode.parameters.size(); i++) {
+                functionCallNode.parameters.get(i).accept(this);
+                Symbol.Types type1 = functionCallNode.parameters.get(i).exprType.getType();
+                Symbol.Types type2 = funcSymbol.argTypes.get(i).type;
+                if (!type1.equals(type2)) {
+                    if (!((type1 == Symbol.Types.STRUCT || type1 == Symbol.Types.ARRAY) &&
+                            type2 == Symbol.Types.NULL)) {
+                        throw new TypeError("Function parameter type error when calling " + functionCallNode.name);
+                    }
+                }
+            }
+        }
+        functionCallNode.exprType = getType(funcSymbol.returnType);
         return null;
     }
 
@@ -250,6 +289,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(MemberFuncNode memberFuncNode) {
+        memberFuncNode.expr.accept(this);
         ClassTypeSymbol classTypeSymbol =
                 (ClassTypeSymbol)currentScope.resolve(memberFuncNode.expr.exprType);
         try {
@@ -257,6 +297,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
         } catch (RuntimeException e) {
             throw new MemberError(classTypeSymbol.name+" don't have member func " + memberFuncNode.name);
         }
+        memberFuncNode.exprType = getType(classTypeSymbol.members.resolve(memberFuncNode.name));
         return null;
     }
 
@@ -328,6 +369,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(VariableDecl variableDecl) {
+        variableDecl.type.accept(this);
         TypeSymbol typeSymbol = (TypeSymbol) currentScope.resolve(variableDecl.type);
         if (variableDecl.init != null) {
             variableDecl.init.accept(this);

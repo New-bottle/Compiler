@@ -1,10 +1,20 @@
 package AST;
 
-import Symbols.Symbol;
+import Symbols.*;
+import Exception.TypeError;
 
 public abstract class Type extends Node {
     public abstract Symbol.Types getType();
 
+    static public Type getType(TypeSymbol typeSymbol) {
+        if (typeSymbol instanceof BuiltInTypeSymbol) return new BuiltInType(typeSymbol.type);
+        if (typeSymbol instanceof ArraySymbol) return new ArrayType(getType(((ArraySymbol)typeSymbol).returntype));
+        if (typeSymbol instanceof ClassTypeSymbol) {
+            if (((ClassTypeSymbol) typeSymbol).name.equals("string")) return new BuiltInType(Symbol.Types.STRING);
+            else return new ClassType(((ClassTypeSymbol) typeSymbol).name);
+        }
+        throw new TypeError("Can't resolve typeSymbol");
+    }
     @Override
     public boolean equals(Object o) {
         return ((Type)o).getType() == getType();
