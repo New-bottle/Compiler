@@ -26,7 +26,12 @@ public abstract class Symbol {
             default: throw new TypeError("Can't determine the expr's type. No such type.");
         }
     }
-//  public abstract String toStructureString (String indent);
+
+    @Override
+    public boolean equals(Object o) {
+        return type == ((Symbol)o).type;
+    }
+    //  public abstract String toStructureString (String indent);
 //  public abstract boolean isSameType(Symbol rhs);
 //  public abstract int getRegisterSize();
 //  public abstract int getMemorySize();

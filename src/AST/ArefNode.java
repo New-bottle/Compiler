@@ -1,7 +1,7 @@
 package AST;
 
 // array ref : a[i]
-public class ArefNode extends LHSNode {
+public class ArefNode extends ExprNode {
     public ExprNode name;
     public ExprNode iter;
     public ArefNode(ExprNode name, ExprNode iter) {

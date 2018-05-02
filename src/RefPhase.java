@@ -7,9 +7,11 @@ import static Symbols.Symbol.getType;
 public class RefPhase<T> implements ASTVisitor<T> {
     public Scope currentScope;
     public int inloop;
+    public Type funcReturnType;
 
     public RefPhase (Scope currentScope) {
         this.currentScope = currentScope;
+        this.funcReturnType = null;
         inloop = 0;
     }
 
@@ -23,6 +25,16 @@ public class RefPhase<T> implements ASTVisitor<T> {
         }
         for (int i = 0; i < node.funcs.size(); i++) {
             visit(node.funcs.get(i));
+        }
+        Symbol main = currentScope.resolve("main");
+        if (!(main instanceof FunctionTypeSymbol)) {
+            throw new MainError("Program don't have a Main Function!");
+        }
+        if (((FunctionTypeSymbol)main).argNames.size() != 0) {
+            throw new MainError("Main Function shouldn't have args!");
+        }
+        if (!((FunctionTypeSymbol)main).returnType.equals(new BuiltInTypeSymbol(Symbol.Types.INT))) {
+            throw new MainError("Main Function should return an INT!");
         }
         return null;
     }
@@ -55,6 +67,11 @@ public class RefPhase<T> implements ASTVisitor<T> {
                     String err = '(' + binaryOpNode.left.exprType.getType().name() + " " + binaryOpNode.op.name() + " "
                             + binaryOpNode.right.exprType.getType().name() + ')';
                     throw new TypeError("BinaryOp : " + err);
+                } else {
+                    if (!(binaryOpNode.left.exprType.getType() == Symbol.Types.STRUCT ||
+                        binaryOpNode.left.exprType.getType() == Symbol.Types.ARRAY)) {
+                        throw new TypeError("Can't assign null to a " + binaryOpNode.left.exprType.getType().name() + " variable.");
+                    }
                 }
             }
         } else {
@@ -144,18 +161,19 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(ForNode forNode) {
-        if (forNode.initWithDecl != null) visit(forNode.initWithDecl);
-        else visit(forNode.init);
+        if (forNode.initWithDecl != null) forNode.initWithDecl.accept(this);
+        else forNode.init.accept(this);
         inloop ++;
-        visit(forNode.cond);
-        visit(forNode.iter);
-        visit(forNode.body);
+        forNode.cond.accept(this);
+        forNode.iter.accept(this);
+        forNode.body.accept(this);
         inloop --;
         return null;
     }
 
     @Override
     public T visit(FuncDeclNode funcDeclNode) {
+        funcReturnType = funcDeclNode.type;
         if (currentScope.getEnclosingScope() != null) { // class member func
             TypeSymbol returnTypeSymbol = (TypeSymbol) currentScope.resolve(funcDeclNode.type);
             FunctionTypeSymbol funcSymbol = new FunctionTypeSymbol(returnTypeSymbol, funcDeclNode.name);
@@ -176,6 +194,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
         funcDeclNode.body.accept(this);
         currentScope = currentScope.getEnclosingScope();
+        funcReturnType = null;
         return null;
     }
 
@@ -197,12 +216,12 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(IfNode ifNode) {
-        visit(ifNode.cond);
+        ifNode.cond.accept(this);
         if (ifNode.cond.exprType.getType() != Symbol.Types.BOOL) {
             throw new TypeError("Need a boolean expression but got a : "+ifNode.cond.exprType.getType().name());
         }
-        visit(ifNode.then);
-        visit(ifNode.otherwise);
+        ifNode.then.accept(this);
+        ifNode.otherwise.accept(this);
         return null;
     }
 
@@ -254,12 +273,30 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(PostOpNode postOpNode) {
-        visit(postOpNode.expr);
+        postOpNode.expr.accept(this);
         return null;
     }
 
     @Override
     public T visit(ReturnNode returnNode) {
+        if (funcReturnType == null) {
+            throw new JumpError("Not in a function, can't return!");
+        }
+        if (returnNode.expr == null) {
+            if (funcReturnType.getType() != Symbol.Types.NULL) {
+                throw new TypeError("Function return type error!");
+            }
+        } else {
+            returnNode.expr.accept(this);
+            if (!funcReturnType.equals(returnNode.expr.exprType)) {
+                if (funcReturnType.getType() == Symbol.Types.STRUCT ||
+                    funcReturnType.getType() == Symbol.Types.ARRAY) {
+                    if (returnNode.expr.exprType.getType() != Symbol.Types.NULL) {
+                        throw new TypeError("Function return type error!");
+                    }
+                }
+            }
+        }
         return null;
     }
 
@@ -285,13 +322,22 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(UnaryExprNode unaryExprNode) {
-        visit(unaryExprNode.expr);
+        unaryExprNode.expr.accept(this);
         return null;
     }
 
     @Override
     public T visit(VariableDecl variableDecl) {
         TypeSymbol typeSymbol = (TypeSymbol) currentScope.resolve(variableDecl.type);
+        if (variableDecl.init != null) {
+            variableDecl.init.accept(this);
+            if (!variableDecl.init.exprType.equals(variableDecl.type)) {
+                if (!((variableDecl.init.exprType.getType() == Symbol.Types.STRUCT ||
+                    variableDecl.init.exprType.getType() == Symbol.Types.ARRAY) &&
+                        variableDecl.type.getType() == Symbol.Types.NULL))
+                    throw new TypeError("Initial expr's type doesn't match.");
+            }
+        }
         currentScope.define(variableDecl.name, new VariableSymbol(typeSymbol, variableDecl.name));
         return null;
     }
@@ -311,7 +357,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
         if (whileNode.cond.exprType.getType() != Symbol.Types.BOOL) {
             throw new TypeError("Need a boolean expression but got a : "+whileNode.cond.exprType.getType().name());
         }
-        visit(whileNode.body);
+        whileNode.body.accept(this);
         inloop --;
         return null;
     }
