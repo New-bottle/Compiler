@@ -89,7 +89,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
                 throw new TypeError("BinaryOp : " + err);
             }
             if (!binaryOpNode.left.exprType.getType().equals(Symbol.Types.INT) &&
-                    !binaryOpNode.left.exprType.getType().equals(Symbol.Types.STRING) &&
+                    !binaryOpNode.left.exprType.equals(new ClassType("string")) &&
                     !binaryOpNode.left.exprType.getType().equals(Symbol.Types.BOOL)) {
                 throw new TypeError("BinaryOp computing non-builtin type.");
             }
@@ -293,6 +293,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
         } catch (RuntimeException e) {
             throw new MemberError(classTypeSymbol.name+" don't have member var " + memberNode.name);
         }
+        memberNode.exprType = getType(classTypeSymbol.members.find(memberNode.name));
         return null;
     }
 
@@ -306,7 +307,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
         } catch (RuntimeException e) {
             throw new MemberError(classTypeSymbol.name+" don't have member func " + memberFuncNode.name);
         }
-        memberFuncNode.exprType = getType(classTypeSymbol.members.resolve(memberFuncNode.name));
+        memberFuncNode.exprType = getType(classTypeSymbol.members.find(memberFuncNode.name));
         return null;
     }
 
@@ -337,7 +338,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
             throw new JumpError("Not in a function, can't return!");
         }
         if (returnNode.expr == null) {
-            if (funcReturnType.getType() != Symbol.Types.NULL) {
+            if (funcReturnType.getType() != Symbol.Types.VOID) {
                 throw new TypeError("Function return type error!");
             }
         } else {

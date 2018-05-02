@@ -23,7 +23,9 @@ public abstract class Symbol {
             case FUNCTION:    return getType(((FunctionTypeSymbol)tmp).returnType);
             case STRUCT  :    return new ClassType(((ClassTypeSymbol)tmp).name);
             case VOID    :    return new BuiltInType(Types.VOID);
-            default: throw new TypeError("Can't determine the expr's type. No such type.");
+            default:
+                return getType(((VariableSymbol)tmp).returntype);
+//                throw new TypeError("Can't determine the expr's type. No such type.");
         }
     }
 
