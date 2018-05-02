@@ -20,6 +20,8 @@ public class BinaryOpNode extends ExprNode {
         this.op = op;
         this.left = left;
         this.right = right;
+        if (op == BinaryOp.ASSIGN) this.isLvalue = true;
+        else this.isLvalue = false;
     }
 
 

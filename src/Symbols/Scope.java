@@ -9,4 +9,5 @@ public interface Scope {
     public void define(String name, Symbol symbol);     // define sym in this scope
     public Symbol resolve(String name); // look up name in scope
     public Symbol resolve(Type type);
+    public Symbol find(String name);
 }

@@ -7,6 +7,7 @@ public class ArefNode extends ExprNode {
     public ArefNode(ExprNode name, ExprNode iter) {
         this.name = name;
         this.iter = iter;
+        this.isLvalue = true;
     }
 
     public Object accept(ASTVisitor visitor) {

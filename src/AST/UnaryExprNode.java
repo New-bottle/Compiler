@@ -7,6 +7,8 @@ public class UnaryExprNode extends UnaryOpNode {
     public UnaryExprNode(UnaryOp op, ExprNode expr) {
         this.op = op;
         this.expr = expr;
+        if (op == UnaryOp.ADD || op == UnaryOp.SUB) this.isLvalue = true;
+        else this.isLvalue = false;
     }
 
     public Object accept(ASTVisitor visitor) {
