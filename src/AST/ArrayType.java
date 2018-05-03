@@ -17,4 +17,9 @@ public class ArrayType extends Type {
         visitor.visit(this);
         return null;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        return this.baseType.equals(((ArrayType)o).baseType);
+    }
 }
