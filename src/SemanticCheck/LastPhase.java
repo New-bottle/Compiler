@@ -387,6 +387,9 @@ public class LastPhase<T> implements ASTVisitor<T> {
         if (!postOpNode.expr.isLvalue) {
             throw new AssignError("PostOp " + postOpNode.expr.toString()+" is not a L value.");
         }
+        if (postOpNode.expr.exprType.getType() != Symbol.Types.INT) {
+            throw new TypeError("Can't do Post ++/-- on a non-INT.");
+        }
         postOpNode.exprType = postOpNode.expr.exprType;
         return null;
     }
