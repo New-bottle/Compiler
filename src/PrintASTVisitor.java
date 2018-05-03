@@ -122,7 +122,8 @@ public class PrintASTVisitor<T> implements ASTVisitor<T> {
 
     public T visit(ExprStmtNode exprStmtNode) {
         out.print(indent()+"ExprStmt:");
-        exprStmtNode.expr.accept(this);
+        if (exprStmtNode.expr != null)
+            exprStmtNode.expr.accept(this);
         out.println("");
         return null;
     }
@@ -138,9 +139,11 @@ public class PrintASTVisitor<T> implements ASTVisitor<T> {
             forNode.init.accept(this);
         }
         out.println("");
-        out.print(indent()+"cond:");
-        forNode.cond.accept(this);
-        out.println("");
+        if (forNode.cond != null) {
+            out.print(indent()+"cond:");
+            forNode.cond.accept(this);
+            out.println("");
+        }
         if (forNode.iter != null) {
             out.print(indent() + "iter:");
             forNode.iter.accept(this);

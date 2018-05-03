@@ -13,11 +13,13 @@ public class LastPhase<T> implements ASTVisitor<T> {
     public int inloop;
     public Type funcReturnType;
     public boolean newBlockScope;
+    public Type thisType;
     private List<Type> BuiltInTypeTable;
 
     public LastPhase(Scope currentScope) {
         this.currentScope = currentScope;
         this.funcReturnType = null;
+        this.thisType = null;
         inloop = 0;
         newBlockScope = true;
         BuiltInTypeTable = new ArrayList<Type>();
@@ -116,13 +118,13 @@ public class LastPhase<T> implements ASTVisitor<T> {
                 break;
             case NE:case EQ:case ASSIGN:
                 break;
-            case ADD:
+            case ADD:case GE:case GT:case LE:case LT:
                 if (!typel.equals(new BuiltInType(Symbol.Types.INT)) && !typel.equals(new ClassType("string")))
-                    throw new TypeError("Can only do " + binaryOpNode.op.name() + " on INT or string.");
+                    throw new TypeError("Can only do " + binaryOpNode.op.name() + " with INT or string.");
                 break;
             default:
                 if (!typel.equals(new BuiltInType(Symbol.Types.INT)))
-                    throw new TypeError("Can only do " + binaryOpNode.op.name() + " on INT.");
+                    throw new TypeError("Can only do " + binaryOpNode.op.name() + " with INT.");
                 break;
 //            case ADD:case SUB:case MUL:case DIV:case MOD:case AND:case OR:case LT:case LE:case GT:case GE:case XOR:case SHL:case SHR:
         }
@@ -176,11 +178,13 @@ public class LastPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(ClassNode classNode) {
+        thisType = getType(currentScope.resolve(classNode.name));
         currentScope = classNode.scope;
         for (int i = 0; i < classNode.memberf.size(); i++) {
             classNode.memberf.get(i).accept(this);
         }
         currentScope = currentScope.getEnclosingScope();
+        thisType = null;
         return null;
     }
 
@@ -204,7 +208,8 @@ public class LastPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(ExprStmtNode exprStmtNode) {
-        exprStmtNode.expr.accept(this);
+        if (exprStmtNode.expr != null)
+            exprStmtNode.expr.accept(this);
         return null;
     }
 
@@ -217,7 +222,12 @@ public class LastPhase<T> implements ASTVisitor<T> {
             forNode.init.accept(this);
         }
         inloop ++;
-        forNode.cond.accept(this);
+        if (forNode.cond != null) {
+            forNode.cond.accept(this);
+            if (forNode.cond.exprType.getType() != Symbol.Types.BOOL) {
+                throw new TypeError("Need a boolean expression but got a : "+forNode.cond.exprType.toString());
+            }
+        }
         if (forNode.iter != null)
             forNode.iter.accept(this);
         forNode.body.accept(this);
@@ -267,17 +277,26 @@ public class LastPhase<T> implements ASTVisitor<T> {
             throw new RuntimeException("FunctionCall failed: Symbol is not a function.");
         }
         FunctionTypeSymbol funcSymbol = (FunctionTypeSymbol) sym;
+        int need = funcSymbol.argTypes.size();
+        int have = 0;
         if (functionCallNode.parameters != null) {
+            have = functionCallNode.parameters.size();
+            if (need != have) {
+                throw new FunctionCallError("Need " + need + " parameter(s) but got " + have + "." );
+            }
             for (int i = 0; i < functionCallNode.parameters.size(); i++) {
                 functionCallNode.parameters.get(i).accept(this);
-                Type type1 = functionCallNode.parameters.get(i).exprType;
-                Type type2 = getType(funcSymbol.argTypes.get(i));
+                Type type1 = getType(funcSymbol.argTypes.get(i));
+                Type type2 = functionCallNode.parameters.get(i).exprType;
                 if (!type1.equals(type2)) {
                     if (BuiltInTypeTable.contains(type1) || type2.getType() != Symbol.Types.NULL) {
                         throw new TypeError("Function parameter type error when calling " + functionCallNode.name);
                     }
                 }
             }
+        }
+        if (need != have) {
+            throw new FunctionCallError("Need " + need + " parameter(s) but got " + have + "." );
         }
         functionCallNode.exprType = getType(funcSymbol.returnType);
         return null;
@@ -351,6 +370,9 @@ public class LastPhase<T> implements ASTVisitor<T> {
     @Override
     public T visit(NewExpr newExpr) {
         newExpr.type.accept(this);
+        if (newExpr.type.getType() == Symbol.Types.VOID) {
+            throw new TypeError("Can't new a variable of void.");
+        }
         return null;
     }
 
@@ -364,6 +386,9 @@ public class LastPhase<T> implements ASTVisitor<T> {
         postOpNode.expr.accept(this);
         if (!postOpNode.expr.isLvalue) {
             throw new AssignError("PostOp " + postOpNode.expr.toString()+" is not a L value.");
+        }
+        if (postOpNode.expr.exprType.getType() != Symbol.Types.INT) {
+            throw new TypeError("Can't do Post ++/-- on a non-INT.");
         }
         postOpNode.exprType = postOpNode.expr.exprType;
         return null;
@@ -401,6 +426,7 @@ public class LastPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(ThisNode thisNode) {
+        thisNode.exprType = thisType;
         return null;
     }
 
@@ -463,7 +489,7 @@ public class LastPhase<T> implements ASTVisitor<T> {
         inloop ++;
         whileNode.cond.accept(this);
         if (whileNode.cond.exprType.getType() != Symbol.Types.BOOL) {
-            throw new TypeError("Need a boolean expression but got a : "+whileNode.cond.exprType.getType().name());
+            throw new TypeError("Need a boolean expression but got a : "+whileNode.cond.exprType.toString());
         }
         whileNode.body.accept(this);
         inloop --;
