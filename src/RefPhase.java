@@ -359,6 +359,8 @@ public class RefPhase<T> implements ASTVisitor<T> {
                     if (returnNode.expr.exprType.getType() != Symbol.Types.NULL) {
                         throw new TypeError("Function return type error!");
                     }
+                } else {
+                    throw new TypeError("Function return type error!");
                 }
             }
         }
