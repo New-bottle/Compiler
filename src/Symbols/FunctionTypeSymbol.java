@@ -3,7 +3,7 @@ package Symbols;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FunctionTypeSymbol extends Symbol {
+public class FunctionTypeSymbol extends TypeSymbol {
     public TypeSymbol returnType;
     public String name;
     public List<TypeSymbol> argTypes = new ArrayList<>();

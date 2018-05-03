@@ -1,15 +1,16 @@
 import AST.*;
 import Symbols.Symbol;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
-import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.ArrayList;
 import java.util.List;
+import Exception.*;
 
 public class BuildASTVisitor extends grammarsBaseVisitor<Node> {
 
     @Override
     public Node visitProg(grammarsParser.ProgContext ctx) {
+        List<Node> comps = new ArrayList<Node>();
         List<FuncDeclNode> funcs = new ArrayList<FuncDeclNode>();
         List<VariableDecl> vars = new ArrayList<VariableDecl>();
         List<ClassNode>    classes = new ArrayList<ClassNode>();
@@ -18,6 +19,7 @@ public class BuildASTVisitor extends grammarsBaseVisitor<Node> {
         List<grammarsParser.CompContext> tmp = ctx.comp();
         for (int i = 0; i < tmp.size(); i++) {
             Node t = visit(tmp.get(i));
+            comps.add(t);
             if (t instanceof FuncDeclNode) {
                 funcs.add((FuncDeclNode)t);
             } else if (t instanceof VariableDecl) {
@@ -26,7 +28,7 @@ public class BuildASTVisitor extends grammarsBaseVisitor<Node> {
                 classes.add((ClassNode)t);
             }
         }
-        return new AST(funcs, vars, classes);
+        return new AST(comps, funcs, vars, classes);
     }
 
     @Override
@@ -119,7 +121,7 @@ public class BuildASTVisitor extends grammarsBaseVisitor<Node> {
                 parameters.add((VariableDecl)visit(tmp.get(i)));
             }
         }
-        return new FuncDeclNode(type, ctx.ID().getText(), parameters, body);
+        return new FuncDeclNode(type, "__constructor__"+ctx.ID().getText(), parameters, body);
     }
 
     @Override
@@ -397,9 +399,8 @@ public class BuildASTVisitor extends grammarsBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitCreatorNonArray(grammarsParser.CreatorNonArrayContext ctx) {
-        Type type = (Type)visit(ctx.nonArrayTypeSpecifier());
-        return new NewExpr(type, null, null);
+    public Node visitCreatorError(grammarsParser.CreatorErrorContext ctx) {
+        throw new ParseCancellationException("Array dimension specification in new expression should be left aligned.");
     }
 
     @Override
@@ -423,7 +424,16 @@ public class BuildASTVisitor extends grammarsBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitCreatorError(grammarsParser.CreatorErrorContext ctx) {
-        throw new ParseCancellationException("Array dimension specification in new expression should be left aligned.");
+    public Node visitCreatorFunction(grammarsParser.CreatorFunctionContext ctx) {
+        if (ctx.nonArrayTypeSpecifier().ID().getSymbol().getType() != grammarsParser.ID)
+            throw new TypeError("Can't call constructor function");
+        Type type = (Type)visit(ctx.nonArrayTypeSpecifier());
+        return new NewExpr(type, null, null);
+    }
+
+    @Override
+    public Node visitCreatorNonArray(grammarsParser.CreatorNonArrayContext ctx) {
+        Type type = (Type)visit(ctx.nonArrayTypeSpecifier());
+        return new NewExpr(type, null, null);
     }
 }

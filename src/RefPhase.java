@@ -19,14 +19,8 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(AST node) {
-        for (int i = 0; i < node.classes.size(); i++) {
-            visit(node.classes.get(i));
-        }
-        for (int i = 0; i < node.vars.size(); i++) {
-            visit(node.vars.get(i));
-        }
-        for (int i = 0; i < node.funcs.size(); i++) {
-            visit(node.funcs.get(i));
+        for (int i = 0; i < node.comps.size(); i++) {
+            node.comps.get(i).accept(this);
         }
         Symbol main = currentScope.resolve("main");
         if (!(main instanceof FunctionTypeSymbol)) {
@@ -147,6 +141,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
         ClassTypeSymbol classTypeSymbol =
                 (ClassTypeSymbol) currentScope.resolve(classNode.name);
         classNode.scope = new LocalScope(classNode.name, currentScope);
+        classTypeSymbol.members = classNode.scope;
         currentScope = classNode.scope;
 
         for (int i = 0; i < classNode.memberv.size(); i++) {
@@ -155,7 +150,6 @@ public class RefPhase<T> implements ASTVisitor<T> {
         for (int i = 0; i < classNode.memberf.size(); i++) {
             classNode.memberf.get(i).accept(this);
         }
-        classTypeSymbol.members = classNode.scope;
         currentScope = currentScope.getEnclosingScope();
         return null;
     }
@@ -379,11 +373,6 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(ThisNode thisNode) {
-        return null;
-    }
-
-    @Override
-    public T visit(TypeDefinition typeDefinition) {
         return null;
     }
 

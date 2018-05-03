@@ -2,7 +2,7 @@ package AST;
 
 import java.util.List;
 
-public class ClassNode extends TypeDefinition {
+public class ClassNode extends Node {
     public String name;
     public List<VariableDecl> memberv;
     public List<FuncDeclNode> memberf;

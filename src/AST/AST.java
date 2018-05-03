@@ -3,15 +3,18 @@ package AST;
 import java.util.List;
 
 public class AST extends Node {
+    public List<Node> comps;
     public List<FuncDeclNode> funcs;
     public List<VariableDecl> vars;
     public List<ClassNode>    classes;
-    public AST(List<FuncDeclNode> funcs, List<VariableDecl> vars,
-               List<ClassNode> classes) {
-        this.funcs   = funcs;
-        this.vars    = vars ;
+
+    public AST(List<Node> comps, List<FuncDeclNode> funcs, List<VariableDecl> vars, List<ClassNode> classes) {
+        this.comps = comps;
+        this.funcs = funcs;
+        this.vars = vars;
         this.classes = classes;
     }
+
     public Object accept(ASTVisitor visitor) {
         visitor.visit(this);
         return null;

@@ -59,8 +59,6 @@ public interface ASTVisitor<T> {
 
     T visit(ThisNode thisNode);
 
-    T visit(TypeDefinition typeDefinition);
-
     T visit(UnaryExprNode unaryExprNode);
 
     T visit(VariableDecl variableDecl);

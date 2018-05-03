@@ -306,6 +306,13 @@ public interface grammarsVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitCreatorArray(grammarsParser.CreatorArrayContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code creatorFunction}
+	 * labeled alternative in {@link grammarsParser#creator}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCreatorFunction(grammarsParser.CreatorFunctionContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code creatorNonArray}
 	 * labeled alternative in {@link grammarsParser#creator}.
 	 * @param ctx the parse tree
