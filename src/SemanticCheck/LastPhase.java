@@ -118,13 +118,13 @@ public class LastPhase<T> implements ASTVisitor<T> {
                 break;
             case NE:case EQ:case ASSIGN:
                 break;
-            case ADD:
+            case ADD:case GE:case GT:case LE:case LT:
                 if (!typel.equals(new BuiltInType(Symbol.Types.INT)) && !typel.equals(new ClassType("string")))
-                    throw new TypeError("Can only do " + binaryOpNode.op.name() + " on INT or string.");
+                    throw new TypeError("Can only do " + binaryOpNode.op.name() + " with INT or string.");
                 break;
             default:
                 if (!typel.equals(new BuiltInType(Symbol.Types.INT)))
-                    throw new TypeError("Can only do " + binaryOpNode.op.name() + " on INT.");
+                    throw new TypeError("Can only do " + binaryOpNode.op.name() + " with INT.");
                 break;
 //            case ADD:case SUB:case MUL:case DIV:case MOD:case AND:case OR:case LT:case LE:case GT:case GE:case XOR:case SHL:case SHR:
         }
