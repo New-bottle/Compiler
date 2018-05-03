@@ -313,9 +313,22 @@ public class LastPhase<T> implements ASTVisitor<T> {
         if (ifNode.cond.exprType.getType() != Symbol.Types.BOOL) {
             throw new TypeError("Need a boolean expression but got a : "+ifNode.cond.exprType.getType().name());
         }
+
+        newBlockScope = false;
+        ifNode.scope = new LocalScope("IfthenScope", currentScope);
+        currentScope = ifNode.scope;
         ifNode.then.accept(this);
-        if (ifNode.otherwise != null)
+        currentScope = currentScope.getEnclosingScope();
+        newBlockScope = true;
+
+        if (ifNode.otherwise != null) {
+            newBlockScope = false;
+            ifNode.otherwiseScope = new LocalScope("IfotherwiseScope", currentScope);
+            currentScope = ifNode.otherwiseScope;
             ifNode.otherwise.accept(this);
+            currentScope = currentScope.getEnclosingScope();
+            newBlockScope = true;
+        }
         return null;
     }
 
@@ -491,7 +504,12 @@ public class LastPhase<T> implements ASTVisitor<T> {
         if (whileNode.cond.exprType.getType() != Symbol.Types.BOOL) {
             throw new TypeError("Need a boolean expression but got a : "+whileNode.cond.exprType.toString());
         }
+        whileNode.scope = new LocalScope("whileScope", currentScope);
+        currentScope = whileNode.scope;
+        newBlockScope = false;
         whileNode.body.accept(this);
+        newBlockScope = true;
+        currentScope = currentScope.getEnclosingScope();
         inloop --;
         return null;
     }
