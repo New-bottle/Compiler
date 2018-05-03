@@ -1,3 +1,5 @@
+package SemanticCheck;
+
 import AST.*;
 import Symbols.*;
 import Exception.*;
@@ -6,14 +8,14 @@ import java.util.*;
 
 import static Symbols.Symbol.getType;
 
-public class RefPhase<T> implements ASTVisitor<T> {
+public class LastPhase<T> implements ASTVisitor<T> {
     public Scope currentScope;
     public int inloop;
     public Type funcReturnType;
     public boolean newBlockScope;
     private List<Type> BuiltInTypeTable;
 
-    public RefPhase (Scope currentScope) {
+    public LastPhase(Scope currentScope) {
         this.currentScope = currentScope;
         this.funcReturnType = null;
         inloop = 0;
@@ -86,7 +88,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
                         throw new TypeError("Can't assign null to a " + typel.getType().name() + " variable.");
                 }
             }
-        } else if (binaryOpNode.op == BinaryOpNode.BinaryOp.EQ) {
+        } else if (binaryOpNode.op == BinaryOpNode.BinaryOp.EQ || binaryOpNode.op == BinaryOpNode.BinaryOp.NE) {
             if (!typel.equals(typer)) {
                 if (typer.getType() != Symbol.Types.NULL) {
                     String err = '(' + typel.getType().name() + " " + binaryOpNode.op.name() + " "
@@ -106,6 +108,23 @@ public class RefPhase<T> implements ASTVisitor<T> {
             if (!BuiltInTypeTable.contains(typel)) {
                 throw new TypeError("BinaryOp computing "+ binaryOpNode.op.name() +" non-builtin type.");
             }
+        }
+        switch (binaryOpNode.op) {
+            case LOR:case LAND:
+                if (!typel.equals(new BuiltInType(Symbol.Types.BOOL)))
+                    throw new TypeError("Can only do " + binaryOpNode.op.name() + " on BOOL.");
+                break;
+            case NE:case EQ:case ASSIGN:
+                break;
+            case ADD:
+                if (!typel.equals(new BuiltInType(Symbol.Types.INT)) && !typel.equals(new ClassType("string")))
+                    throw new TypeError("Can only do " + binaryOpNode.op.name() + " on INT or string.");
+                break;
+            default:
+                if (!typel.equals(new BuiltInType(Symbol.Types.INT)))
+                    throw new TypeError("Can only do " + binaryOpNode.op.name() + " on INT.");
+                break;
+//            case ADD:case SUB:case MUL:case DIV:case MOD:case AND:case OR:case LT:case LE:case GT:case GE:case XOR:case SHL:case SHR:
         }
         switch (binaryOpNode.op) {
             case EQ: case GE: case GT:case LE:case LT:case NE:case LAND:case LOR:
@@ -157,15 +176,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(ClassNode classNode) {
-        ClassTypeSymbol classTypeSymbol =
-                (ClassTypeSymbol) currentScope.resolve(classNode.name);
-        classNode.scope = new LocalScope(classNode.name, currentScope);
-        classTypeSymbol.members = classNode.scope;
         currentScope = classNode.scope;
-
-        for (int i = 0; i < classNode.memberv.size(); i++) {
-            classNode.memberv.get(i).accept(this);
-        }
         for (int i = 0; i < classNode.memberf.size(); i++) {
             classNode.memberf.get(i).accept(this);
         }
@@ -221,9 +232,11 @@ public class RefPhase<T> implements ASTVisitor<T> {
         newBlockScope = false;
         funcReturnType = funcDeclNode.type;
         if (currentScope.getEnclosingScope() != null) { // class member func
-            TypeSymbol returnTypeSymbol = (TypeSymbol) currentScope.resolve(funcDeclNode.type);
-            FunctionTypeSymbol funcSymbol = new FunctionTypeSymbol(returnTypeSymbol, funcDeclNode.name);
-            currentScope.define(funcDeclNode.name, funcSymbol);
+            currentScope = funcDeclNode.scope;
+            funcDeclNode.body.accept(this);
+            currentScope = currentScope.getEnclosingScope();
+            funcReturnType = null;
+            return null;
         }
         FunctionTypeSymbol funcSymbol =
                 (FunctionTypeSymbol)currentScope.resolve(funcDeclNode.name);

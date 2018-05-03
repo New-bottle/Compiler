@@ -5,11 +5,11 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.io.FileInputStream;
-import java.util.Scanner;
+import SemanticCheck.*;
 
-public class SemanticCheck {
+public class SemanticJudge {
     static public void main(String[] args) throws Exception{
-        String pos = "/home/yanhongyu/Git/homework/Compiler/test/semantic/testcase_696.txt";
+        String pos = "/home/yanhongyu/Git/homework/Compiler/test/semantic/testcase_776.txt";
         FileInputStream fin = new FileInputStream(pos);
         ANTLRInputStream input = new ANTLRInputStream(fin);
         grammarsLexer lexer = new grammarsLexer(input);
@@ -23,9 +23,11 @@ public class SemanticCheck {
         printer.visit(root);
         root.scope = new GlobalScope();
 
-        DefPhase<Void> defPhase = new DefPhase<>(root.scope);
-        defPhase.visit(root);
-        RefPhase<Void> refPhase = new RefPhase<>(root.scope);
-        refPhase.visit(root);
+        FirstPhase<Void> firstPhase = new FirstPhase<>(root.scope);
+        firstPhase.visit(root);
+        SecondPhase<Void> secondPhase = new SecondPhase<>(root.scope);
+        secondPhase.visit(root);
+        LastPhase<Void> lastPhase = new LastPhase<>(root.scope);
+        lastPhase.visit(root);
     }
 }
