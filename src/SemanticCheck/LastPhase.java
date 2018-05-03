@@ -13,11 +13,13 @@ public class LastPhase<T> implements ASTVisitor<T> {
     public int inloop;
     public Type funcReturnType;
     public boolean newBlockScope;
+    public Type thisType;
     private List<Type> BuiltInTypeTable;
 
     public LastPhase(Scope currentScope) {
         this.currentScope = currentScope;
         this.funcReturnType = null;
+        this.thisType = null;
         inloop = 0;
         newBlockScope = true;
         BuiltInTypeTable = new ArrayList<Type>();
@@ -176,11 +178,13 @@ public class LastPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(ClassNode classNode) {
+        thisType = getType(currentScope.resolve(classNode.name));
         currentScope = classNode.scope;
         for (int i = 0; i < classNode.memberf.size(); i++) {
             classNode.memberf.get(i).accept(this);
         }
         currentScope = currentScope.getEnclosingScope();
+        thisType = null;
         return null;
     }
 
@@ -403,6 +407,7 @@ public class LastPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(ThisNode thisNode) {
+        thisNode.exprType = thisType;
         return null;
     }
 
