@@ -252,14 +252,6 @@ public class LastPhase<T> implements ASTVisitor<T> {
                 (FunctionTypeSymbol)currentScope.resolve(funcDeclNode.name);
         funcDeclNode.scope = new LocalScope(funcDeclNode.name, currentScope);
         currentScope = funcDeclNode.scope;
-        if (funcDeclNode.parameters != null) {
-            for (int i = 0; i < funcDeclNode.parameters.size(); i++) {
-                VariableDecl vard = funcDeclNode.parameters.get(i);
-                TypeSymbol typeSymbol = (TypeSymbol) currentScope.resolve(vard.type);
-                currentScope.define(vard.name, new VariableSymbol(typeSymbol, vard.name));
-                funcSymbol.addArg(typeSymbol, vard.name);
-            }
-        }
 
         funcDeclNode.body.accept(this);
         currentScope = currentScope.getEnclosingScope();
@@ -282,7 +274,7 @@ public class LastPhase<T> implements ASTVisitor<T> {
         if (functionCallNode.parameters != null) {
             have = functionCallNode.parameters.size();
             if (need != have) {
-                throw new FunctionCallError("Need " + need + " parameter(s) but got " + have + "." );
+                throw new FunctionCallError(functionCallNode.name + " need " + need + " parameter(s) but got " + have + "." );
             }
             for (int i = 0; i < functionCallNode.parameters.size(); i++) {
                 functionCallNode.parameters.get(i).accept(this);
@@ -313,9 +305,22 @@ public class LastPhase<T> implements ASTVisitor<T> {
         if (ifNode.cond.exprType.getType() != Symbol.Types.BOOL) {
             throw new TypeError("Need a boolean expression but got a : "+ifNode.cond.exprType.getType().name());
         }
+
+        newBlockScope = false;
+        ifNode.scope = new LocalScope("IfthenScope", currentScope);
+        currentScope = ifNode.scope;
         ifNode.then.accept(this);
-        if (ifNode.otherwise != null)
+        currentScope = currentScope.getEnclosingScope();
+        newBlockScope = true;
+
+        if (ifNode.otherwise != null) {
+            newBlockScope = false;
+            ifNode.otherwiseScope = new LocalScope("IfotherwiseScope", currentScope);
+            currentScope = ifNode.otherwiseScope;
             ifNode.otherwise.accept(this);
+            currentScope = currentScope.getEnclosingScope();
+            newBlockScope = true;
+        }
         return null;
     }
 
@@ -491,7 +496,12 @@ public class LastPhase<T> implements ASTVisitor<T> {
         if (whileNode.cond.exprType.getType() != Symbol.Types.BOOL) {
             throw new TypeError("Need a boolean expression but got a : "+whileNode.cond.exprType.toString());
         }
+        whileNode.scope = new LocalScope("whileScope", currentScope);
+        currentScope = whileNode.scope;
+        newBlockScope = false;
         whileNode.body.accept(this);
+        newBlockScope = true;
+        currentScope = currentScope.getEnclosingScope();
         inloop --;
         return null;
     }

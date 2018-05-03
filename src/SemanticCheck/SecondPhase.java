@@ -144,8 +144,8 @@ public class SecondPhase<T> implements ASTVisitor<T> {
             for (int i = 0; i < funcDeclNode.parameters.size(); i++) {
                 VariableDecl vard = funcDeclNode.parameters.get(i);
                 TypeSymbol typeSymbol = (TypeSymbol) currentScope.resolve(vard.type);
-                currentScope.define(vard.name, new VariableSymbol(typeSymbol, vard.name));
                 funcSymbol.addArg(typeSymbol, vard.name);
+                currentScope.define(vard.name, new VariableSymbol(typeSymbol, vard.name));
             }
         }
 
