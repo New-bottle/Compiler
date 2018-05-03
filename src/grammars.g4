@@ -121,6 +121,7 @@ expr       : expr op=('++'|'--')               # PostfixIncDec
 
 creator    : nonArrayTypeSpecifier ('[' expr ']')+ ('['']')+ ('['expr']')+  # creatorError
            | nonArrayTypeSpecifier ('[' expr ']')+ ('['']')*  # creatorArray
+           | nonArrayTypeSpecifier '(' ')'                    # creatorFunction
            | nonArrayTypeSpecifier                            # creatorNonArray
            ;
 

@@ -278,11 +278,6 @@ public class PrintASTVisitor<T> implements ASTVisitor<T> {
         return null;
     }
 
-    public T visit(TypeDefinition typeDefinition) {
-        //TODO
-        return null;
-    }
-
     public T visit(VariableDecl variableDecl) {
         out.print(indent()+"VariableDecl:");
         variableDecl.type.accept(this);

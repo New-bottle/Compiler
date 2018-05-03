@@ -165,11 +165,6 @@ public class DefPhase<T> implements ASTVisitor<T> {
     }
 
     @Override
-    public T visit(TypeDefinition typeDefinition) {
-        return null;
-    }
-
-    @Override
     public T visit(UnaryExprNode unaryExprNode) {
         return null;
     }
