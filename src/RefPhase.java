@@ -2,6 +2,8 @@ import AST.*;
 import Symbols.*;
 import Exception.*;
 
+import java.util.*;
+
 import static Symbols.Symbol.getType;
 
 public class RefPhase<T> implements ASTVisitor<T> {
@@ -9,12 +11,17 @@ public class RefPhase<T> implements ASTVisitor<T> {
     public int inloop;
     public Type funcReturnType;
     public boolean newBlockScope;
+    private List<Type> BuiltInTypeTable;
 
     public RefPhase (Scope currentScope) {
         this.currentScope = currentScope;
         this.funcReturnType = null;
         inloop = 0;
         newBlockScope = true;
+        BuiltInTypeTable = new ArrayList<Type>();
+        BuiltInTypeTable.add(new BuiltInType(Symbol.Types.INT));
+        BuiltInTypeTable.add(new BuiltInType(Symbol.Types.BOOL));
+        BuiltInTypeTable.add(new ClassType("string"));
     }
 
     @Override
@@ -60,39 +67,51 @@ public class RefPhase<T> implements ASTVisitor<T> {
         binaryOpNode.left.accept(this);
         binaryOpNode.right.accept(this);
 
+        Type typel = binaryOpNode.left.exprType;
+        Type typer = binaryOpNode.right.exprType;
         if (binaryOpNode.op == BinaryOpNode.BinaryOp.ASSIGN) {
             if (!binaryOpNode.left.isLvalue) {
                 throw new AssignError(binaryOpNode.left.toString() +" is not a Lvalue.");
             }
-            if (!binaryOpNode.left.exprType.equals(binaryOpNode.right.exprType)) {
-                if (binaryOpNode.right.exprType != null) {
-                    String err = '(' + binaryOpNode.left.exprType.getType().name() + " " + binaryOpNode.op.name() + " "
-                            + binaryOpNode.right.exprType.getType().name() + ')';
+            if (!typel.equals(typer)) {
+                if (typer.getType() != Symbol.Types.NULL) {
+                    String err = '(' + typel.toString() + " " + binaryOpNode.op.name() + " "
+                            + typer.toString() + ')';
                     throw new TypeError("BinaryOp : " + err);
                 } else {
-                    if (!(binaryOpNode.left.exprType.getType() == Symbol.Types.STRUCT ||
-                        binaryOpNode.left.exprType.getType() == Symbol.Types.ARRAY)) {
-                        throw new TypeError("Can't assign null to a " + binaryOpNode.left.exprType.getType().name() + " variable.");
-                    }
+                    Symbol.Types type1 = typel.getType();
+                    Symbol.Types type2 = typer.getType();
+
+                    if (BuiltInTypeTable.contains(typel))
+                        throw new TypeError("Can't assign null to a " + typel.getType().name() + " variable.");
+                }
+            }
+        } else if (binaryOpNode.op == BinaryOpNode.BinaryOp.EQ) {
+            if (!typel.equals(typer)) {
+                if (typer.getType() != Symbol.Types.NULL) {
+                    String err = '(' + typel.getType().name() + " " + binaryOpNode.op.name() + " "
+                            + typer.getType().name() + ')';
+                    throw new TypeError("BinaryOp : " + err);
+                } else {
+                    if (BuiltInTypeTable.contains(typel))
+                        throw new TypeError("Can't compare null equals to a " + typel.getType().name() + " variable.");
                 }
             }
         } else {
-            if (!binaryOpNode.left.exprType.equals(binaryOpNode.right.exprType)) {
-                String err = '(' + binaryOpNode.left.exprType.getType().name() + " " + binaryOpNode.op.name() + " "
-                        + binaryOpNode.right.exprType.getType().name() + ')';
+            if (!typel.equals(typer)) {
+                String err = '(' + typel.getType().name() + " " + binaryOpNode.op.name() + " "
+                        + typer.getType().name() + ')';
                 throw new TypeError("BinaryOp : " + err);
             }
-            if (!binaryOpNode.left.exprType.getType().equals(Symbol.Types.INT) &&
-                    !binaryOpNode.left.exprType.equals(new ClassType("string")) &&
-                    !binaryOpNode.left.exprType.getType().equals(Symbol.Types.BOOL)) {
-                throw new TypeError("BinaryOp computing non-builtin type.");
+            if (!BuiltInTypeTable.contains(typel)) {
+                throw new TypeError("BinaryOp computing "+ binaryOpNode.op.name() +" non-builtin type.");
             }
-            switch (binaryOpNode.op) {
-                case EQ: case GE: case GT:case LE:case LT:case NE:case LAND:case LOR:
-                    binaryOpNode.exprType = new BuiltInType(Symbol.Types.BOOL); break;
-                default:
-                    binaryOpNode.exprType = binaryOpNode.left.exprType;
-            }
+        }
+        switch (binaryOpNode.op) {
+            case EQ: case GE: case GT:case LE:case LT:case NE:case LAND:case LOR:
+                binaryOpNode.exprType = new BuiltInType(Symbol.Types.BOOL); break;
+            default:
+                binaryOpNode.exprType = typel;
         }
         return null;
     }
@@ -183,11 +202,13 @@ public class RefPhase<T> implements ASTVisitor<T> {
         if (forNode.initWithDecl != null) {
             newBlockScope = false;
             forNode.initWithDecl.accept(this);
+        } else if (forNode.init != null) {
+            forNode.init.accept(this);
         }
-        else forNode.init.accept(this);
         inloop ++;
         forNode.cond.accept(this);
-        forNode.iter.accept(this);
+        if (forNode.iter != null)
+            forNode.iter.accept(this);
         forNode.body.accept(this);
         inloop --;
         if (forNode.initWithDecl != null)
@@ -236,11 +257,10 @@ public class RefPhase<T> implements ASTVisitor<T> {
         if (functionCallNode.parameters != null) {
             for (int i = 0; i < functionCallNode.parameters.size(); i++) {
                 functionCallNode.parameters.get(i).accept(this);
-                Symbol.Types type1 = functionCallNode.parameters.get(i).exprType.getType();
-                Symbol.Types type2 = funcSymbol.argTypes.get(i).type;
+                Type type1 = functionCallNode.parameters.get(i).exprType;
+                Type type2 = getType(funcSymbol.argTypes.get(i));
                 if (!type1.equals(type2)) {
-                    if (!((type1 == Symbol.Types.STRUCT || type1 == Symbol.Types.ARRAY) &&
-                            type2 == Symbol.Types.NULL)) {
+                    if (BuiltInTypeTable.contains(type1) || type2.getType() != Symbol.Types.NULL) {
                         throw new TypeError("Function parameter type error when calling " + functionCallNode.name);
                     }
                 }
@@ -348,12 +368,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
         } else {
             returnNode.expr.accept(this);
             if (!funcReturnType.equals(returnNode.expr.exprType)) {
-                if (funcReturnType.getType() == Symbol.Types.STRUCT ||
-                    funcReturnType.getType() == Symbol.Types.ARRAY) {
-                    if (returnNode.expr.exprType.getType() != Symbol.Types.NULL) {
-                        throw new TypeError("Function return type error!");
-                    }
-                } else {
+                if (BuiltInTypeTable.contains(funcReturnType) || returnNode.expr.exprType.getType() != Symbol.Types.NULL) {
                     throw new TypeError("Function return type error!");
                 }
             }
@@ -414,15 +429,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
         if (variableDecl.init != null) {
             variableDecl.init.accept(this);
             if (!variableDecl.init.exprType.equals(variableDecl.type)) {
-                if (variableDecl.type.getType() == Symbol.Types.STRUCT) {
-                    if (((ClassType)variableDecl.type).name == "string")
-                        throw new TypeError("Initial expr's type doesn't match.");
-                    if (variableDecl.init.exprType.getType() != Symbol.Types.NULL)
-                        throw new TypeError("Initial expr's type doesn't match.");
-                } else if (variableDecl.type.getType() == Symbol.Types.ARRAY) {
-                    if (variableDecl.init.exprType.getType() != Symbol.Types.NULL)
-                        throw new TypeError("Initial expr's type doesn't match.");
-                } else
+                if (BuiltInTypeTable.contains(variableDecl.type) || variableDecl.init.exprType.getType() != Symbol.Types.NULL)
                     throw new TypeError("Initial expr's type doesn't match.");
             }
         }

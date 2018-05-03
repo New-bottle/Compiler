@@ -21,4 +21,9 @@ public class ClassType extends Type {
     public boolean equals(ClassType rhs) {
         return name == rhs.name;
     }
+
+    @Override
+    public String toString() {
+        return "<ClassType:"+name+">";
+    }
 }

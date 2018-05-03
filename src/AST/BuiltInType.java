@@ -9,6 +9,7 @@ public class BuiltInType extends Type {
         this.type = type;
     }
 
+    @Override
     public Symbol.Types getType() {
         return type;
     }

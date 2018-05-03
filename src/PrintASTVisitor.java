@@ -133,7 +133,7 @@ public class PrintASTVisitor<T> implements ASTVisitor<T> {
         if (forNode.initWithDecl!=null) {
             out.print(indent()+"initWithDecl:");
             forNode.initWithDecl.accept(this);
-        } else {
+        } else if (forNode.init != null) {
             out.print(indent()+"init:");
             forNode.init.accept(this);
         }
@@ -141,9 +141,11 @@ public class PrintASTVisitor<T> implements ASTVisitor<T> {
         out.print(indent()+"cond:");
         forNode.cond.accept(this);
         out.println("");
-        out.print(indent()+"iter:");
-        forNode.iter.accept(this);
-        out.println("");
+        if (forNode.iter != null) {
+            out.print(indent() + "iter:");
+            forNode.iter.accept(this);
+            out.println("");
+        }
         forNode.body.accept(this);
         left();
         return null;

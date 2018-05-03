@@ -17,6 +17,9 @@ public abstract class Type extends Node {
     }
     @Override
     public boolean equals(Object o) {
+        if (o instanceof ClassType && this instanceof ClassType) {
+            return ((ClassType)this).name.equals(((ClassType)o).name);
+        }
         return ((Type)o).getType() == getType();
     }
 }
