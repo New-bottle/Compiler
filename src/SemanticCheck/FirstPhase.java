@@ -92,6 +92,14 @@ public class FirstPhase<T> implements ASTVisitor<T> {
         TypeSymbol returnTypeSymbol = (TypeSymbol) currentScope.resolve(funcDeclNode.type);
 //        TypeSymbol returnTypeSymbol = (TypeSymbol) funcDeclNode.type.accept(this);
         FunctionTypeSymbol funcSymbol = new FunctionTypeSymbol(returnTypeSymbol, funcDeclNode.name);
+        if (funcDeclNode.parameters != null) {
+            for (int i = 0; i < funcDeclNode.parameters.size(); i++) {
+                VariableDecl vard = funcDeclNode.parameters.get(i);
+                TypeSymbol typeSymbol = (TypeSymbol) currentScope.resolve(vard.type);
+                currentScope.define(vard.name, new VariableSymbol(typeSymbol, vard.name));
+                funcSymbol.addArg(typeSymbol, vard.name);
+            }
+        }
         currentScope.define(funcDeclNode.name, funcSymbol);
         return null;
     }

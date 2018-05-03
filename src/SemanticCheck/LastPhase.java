@@ -252,14 +252,6 @@ public class LastPhase<T> implements ASTVisitor<T> {
                 (FunctionTypeSymbol)currentScope.resolve(funcDeclNode.name);
         funcDeclNode.scope = new LocalScope(funcDeclNode.name, currentScope);
         currentScope = funcDeclNode.scope;
-        if (funcDeclNode.parameters != null) {
-            for (int i = 0; i < funcDeclNode.parameters.size(); i++) {
-                VariableDecl vard = funcDeclNode.parameters.get(i);
-                TypeSymbol typeSymbol = (TypeSymbol) currentScope.resolve(vard.type);
-                currentScope.define(vard.name, new VariableSymbol(typeSymbol, vard.name));
-                funcSymbol.addArg(typeSymbol, vard.name);
-            }
-        }
 
         funcDeclNode.body.accept(this);
         currentScope = currentScope.getEnclosingScope();
@@ -282,7 +274,7 @@ public class LastPhase<T> implements ASTVisitor<T> {
         if (functionCallNode.parameters != null) {
             have = functionCallNode.parameters.size();
             if (need != have) {
-                throw new FunctionCallError("Need " + need + " parameter(s) but got " + have + "." );
+                throw new FunctionCallError(functionCallNode.name + " need " + need + " parameter(s) but got " + have + "." );
             }
             for (int i = 0; i < functionCallNode.parameters.size(); i++) {
                 functionCallNode.parameters.get(i).accept(this);
