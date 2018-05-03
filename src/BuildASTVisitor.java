@@ -114,8 +114,8 @@ public class BuildASTVisitor extends grammarsBaseVisitor<Node> {
 //        ClassType type = new ClassType(ctx.parent.getText());
         BuiltInType type = new BuiltInType(Symbol.Types.VOID);
         String father = ((grammarsParser.ClassDeclContext)ctx.parent).ID().getText();
-        if (ctx.ID().getText() != father) {
-            throw new MemberError("Constructor's name should match class name.");
+        if (!ctx.ID().getText().equals(father)) {
+            throw new MemberError("Constructor's name <" + ctx.ID().getText()+"> should match class name <" + father + ">.");
         }
         List<VariableDecl> parameters = new ArrayList<VariableDecl>();
         StmtNode body = (StmtNode) ctx.blockStatement().accept(this);
