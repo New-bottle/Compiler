@@ -131,13 +131,9 @@ public class SecondPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(FuncDeclNode funcDeclNode) {
-        if (currentScope.getEnclosingScope() != null) { // class member func
-            TypeSymbol returnTypeSymbol = (TypeSymbol) currentScope.resolve(funcDeclNode.type);
-            FunctionTypeSymbol funcSymbol = new FunctionTypeSymbol(returnTypeSymbol, funcDeclNode.name);
-            currentScope.define(funcDeclNode.name, funcSymbol);
-        }
-        FunctionTypeSymbol funcSymbol =
-                (FunctionTypeSymbol)currentScope.resolve(funcDeclNode.name);
+        TypeSymbol returnTypeSymbol = (TypeSymbol) currentScope.resolve(funcDeclNode.type);
+        FunctionTypeSymbol funcSymbol = new FunctionTypeSymbol(returnTypeSymbol, funcDeclNode.name);
+
         funcDeclNode.scope = new LocalScope(funcDeclNode.name, currentScope);
         currentScope = funcDeclNode.scope;
         if (funcDeclNode.parameters != null) {
@@ -148,8 +144,9 @@ public class SecondPhase<T> implements ASTVisitor<T> {
                 currentScope.define(vard.name, new VariableSymbol(typeSymbol, vard.name));
             }
         }
-
         currentScope = currentScope.getEnclosingScope();
+
+        currentScope.define(funcDeclNode.name, funcSymbol);
         return null;
     }
 
