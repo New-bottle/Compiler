@@ -11,4 +11,9 @@ public class ArraySymbol extends TypeSymbol {
         FunctionTypeSymbol size = new FunctionTypeSymbol(new BuiltInTypeSymbol(Types.INT), "size");
         this.members.define("size", size);
     }
+
+    @Override
+    public String toString() {
+        return "<ArrayType: " + returntype.toString() + ">";
+    }
 }

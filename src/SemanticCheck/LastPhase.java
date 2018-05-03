@@ -222,8 +222,12 @@ public class LastPhase<T> implements ASTVisitor<T> {
             forNode.init.accept(this);
         }
         inloop ++;
-        if (forNode.cond != null)
+        if (forNode.cond != null) {
             forNode.cond.accept(this);
+            if (forNode.cond.exprType.getType() != Symbol.Types.BOOL) {
+                throw new TypeError("Need a boolean expression but got a : "+forNode.cond.exprType.toString());
+            }
+        }
         if (forNode.iter != null)
             forNode.iter.accept(this);
         forNode.body.accept(this);
@@ -470,7 +474,7 @@ public class LastPhase<T> implements ASTVisitor<T> {
         inloop ++;
         whileNode.cond.accept(this);
         if (whileNode.cond.exprType.getType() != Symbol.Types.BOOL) {
-            throw new TypeError("Need a boolean expression but got a : "+whileNode.cond.exprType.getType().name());
+            throw new TypeError("Need a boolean expression but got a : "+whileNode.cond.exprType.toString());
         }
         whileNode.body.accept(this);
         inloop --;

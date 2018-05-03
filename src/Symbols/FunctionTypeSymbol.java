@@ -19,4 +19,9 @@ public class FunctionTypeSymbol extends TypeSymbol {
         argTypes.add(type);
         argNames.add(name);
     }
+
+    @Override
+    public String toString() {
+        return "<FunctionType : " + name + ">";
+    }
 }
