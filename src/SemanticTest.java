@@ -4,10 +4,10 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.Scanner;
 
 import AST.*;
 import Symbols.*;
+import SemanticCheck.*;
 
 public class SemanticTest {
     static public void main(String[] args) throws Exception{
@@ -29,9 +29,11 @@ public class SemanticTest {
         printer.visit(root);
         root.scope = new GlobalScope();
 
-        DefPhase<Void> defPhase = new DefPhase<>(root.scope);
+        FirstPhase<Void> defPhase = new FirstPhase<>(root.scope);
         defPhase.visit(root);
-        RefPhase<Void> refPhase = new RefPhase<>(root.scope);
+        SecondPhase<Void> secondPhase = new SecondPhase<>(root.scope);
+        secondPhase.visit(root);
+        LastPhase<Void> refPhase = new LastPhase<>(root.scope);
         refPhase.visit(root);
     }
 }

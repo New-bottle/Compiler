@@ -1,3 +1,5 @@
+package SemanticCheck;
+
 import AST.*;
 import Symbols.*;
 import Exception.*;
@@ -6,14 +8,14 @@ import java.util.*;
 
 import static Symbols.Symbol.getType;
 
-public class RefPhase<T> implements ASTVisitor<T> {
+public class LastPhase<T> implements ASTVisitor<T> {
     public Scope currentScope;
     public int inloop;
     public Type funcReturnType;
     public boolean newBlockScope;
     private List<Type> BuiltInTypeTable;
 
-    public RefPhase (Scope currentScope) {
+    public LastPhase(Scope currentScope) {
         this.currentScope = currentScope;
         this.funcReturnType = null;
         inloop = 0;
@@ -174,15 +176,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(ClassNode classNode) {
-        ClassTypeSymbol classTypeSymbol =
-                (ClassTypeSymbol) currentScope.resolve(classNode.name);
-        classNode.scope = new LocalScope(classNode.name, currentScope);
-        classTypeSymbol.members = classNode.scope;
         currentScope = classNode.scope;
-
-        for (int i = 0; i < classNode.memberv.size(); i++) {
-            classNode.memberv.get(i).accept(this);
-        }
         for (int i = 0; i < classNode.memberf.size(); i++) {
             classNode.memberf.get(i).accept(this);
         }
@@ -238,9 +232,11 @@ public class RefPhase<T> implements ASTVisitor<T> {
         newBlockScope = false;
         funcReturnType = funcDeclNode.type;
         if (currentScope.getEnclosingScope() != null) { // class member func
-            TypeSymbol returnTypeSymbol = (TypeSymbol) currentScope.resolve(funcDeclNode.type);
-            FunctionTypeSymbol funcSymbol = new FunctionTypeSymbol(returnTypeSymbol, funcDeclNode.name);
-            currentScope.define(funcDeclNode.name, funcSymbol);
+            currentScope = funcDeclNode.scope;
+            funcDeclNode.body.accept(this);
+            currentScope = currentScope.getEnclosingScope();
+            funcReturnType = null;
+            return null;
         }
         FunctionTypeSymbol funcSymbol =
                 (FunctionTypeSymbol)currentScope.resolve(funcDeclNode.name);

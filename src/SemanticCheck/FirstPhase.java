@@ -1,10 +1,12 @@
+package SemanticCheck;
+
 import AST.*;
 import Symbols.*;
 
-public class DefPhase<T> implements ASTVisitor<T> {
+public class FirstPhase<T> implements ASTVisitor<T> {
     public Scope currentScope;
 
-    public DefPhase(Scope currentScope) {
+    public FirstPhase(Scope currentScope) {
         this.currentScope = currentScope;
     }
 
