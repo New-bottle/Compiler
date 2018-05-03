@@ -86,7 +86,7 @@ public class RefPhase<T> implements ASTVisitor<T> {
                         throw new TypeError("Can't assign null to a " + typel.getType().name() + " variable.");
                 }
             }
-        } else if (binaryOpNode.op == BinaryOpNode.BinaryOp.EQ) {
+        } else if (binaryOpNode.op == BinaryOpNode.BinaryOp.EQ || binaryOpNode.op == BinaryOpNode.BinaryOp.NE) {
             if (!typel.equals(typer)) {
                 if (typer.getType() != Symbol.Types.NULL) {
                     String err = '(' + typel.getType().name() + " " + binaryOpNode.op.name() + " "
@@ -106,6 +106,23 @@ public class RefPhase<T> implements ASTVisitor<T> {
             if (!BuiltInTypeTable.contains(typel)) {
                 throw new TypeError("BinaryOp computing "+ binaryOpNode.op.name() +" non-builtin type.");
             }
+        }
+        switch (binaryOpNode.op) {
+            case LOR:case LAND:
+                if (!typel.equals(new BuiltInType(Symbol.Types.BOOL)))
+                    throw new TypeError("Can only do " + binaryOpNode.op.name() + " on BOOL.");
+                break;
+            case NE:case EQ:case ASSIGN:
+                break;
+            case ADD:
+                if (!typel.equals(new BuiltInType(Symbol.Types.INT)) && !typel.equals(new ClassType("string")))
+                    throw new TypeError("Can only do " + binaryOpNode.op.name() + " on INT or string.");
+                break;
+            default:
+                if (!typel.equals(new BuiltInType(Symbol.Types.INT)))
+                    throw new TypeError("Can only do " + binaryOpNode.op.name() + " on INT.");
+                break;
+//            case ADD:case SUB:case MUL:case DIV:case MOD:case AND:case OR:case LT:case LE:case GT:case GE:case XOR:case SHL:case SHR:
         }
         switch (binaryOpNode.op) {
             case EQ: case GE: case GT:case LE:case LT:case NE:case LAND:case LOR:
