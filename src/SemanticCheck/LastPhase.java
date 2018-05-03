@@ -204,7 +204,8 @@ public class LastPhase<T> implements ASTVisitor<T> {
 
     @Override
     public T visit(ExprStmtNode exprStmtNode) {
-        exprStmtNode.expr.accept(this);
+        if (exprStmtNode.expr != null)
+            exprStmtNode.expr.accept(this);
         return null;
     }
 
@@ -217,7 +218,8 @@ public class LastPhase<T> implements ASTVisitor<T> {
             forNode.init.accept(this);
         }
         inloop ++;
-        forNode.cond.accept(this);
+        if (forNode.cond != null)
+            forNode.cond.accept(this);
         if (forNode.iter != null)
             forNode.iter.accept(this);
         forNode.body.accept(this);
@@ -270,8 +272,8 @@ public class LastPhase<T> implements ASTVisitor<T> {
         if (functionCallNode.parameters != null) {
             for (int i = 0; i < functionCallNode.parameters.size(); i++) {
                 functionCallNode.parameters.get(i).accept(this);
-                Type type1 = functionCallNode.parameters.get(i).exprType;
-                Type type2 = getType(funcSymbol.argTypes.get(i));
+                Type type1 = getType(funcSymbol.argTypes.get(i));
+                Type type2 = functionCallNode.parameters.get(i).exprType;
                 if (!type1.equals(type2)) {
                     if (BuiltInTypeTable.contains(type1) || type2.getType() != Symbol.Types.NULL) {
                         throw new TypeError("Function parameter type error when calling " + functionCallNode.name);
