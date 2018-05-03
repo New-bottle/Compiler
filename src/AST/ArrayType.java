@@ -20,6 +20,7 @@ public class ArrayType extends Type {
 
     @Override
     public boolean equals(Object o) {
+        if (!(o instanceof ArrayType)) return false;
         return this.baseType.equals(((ArrayType)o).baseType);
     }
 }
