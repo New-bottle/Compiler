@@ -11,11 +11,6 @@ import SemanticCheck.*;
 
 public class SemanticTest {
     static public void main(String[] args) throws Exception{
-        /*
-        String pos = "/home/yanhongyu/Git/homework/Compiler/Parser/"
-                + "src/test/parser/sample2.mm";
-        pos = "/home/yanhongyu/Git/homework/Compiler/test/semantic/testcase_638.txt";
-        */
         InputStream fin = new FileInputStream("program.txt");
         ANTLRInputStream input = new ANTLRInputStream(fin);
         grammarsLexer lexer = new grammarsLexer(input);
@@ -29,11 +24,11 @@ public class SemanticTest {
         printer.visit(root);
         root.scope = new GlobalScope();
 
-        FirstPhase<Void> defPhase = new FirstPhase<>(root.scope);
-        defPhase.visit(root);
+        FirstPhase<Void> firstPhase = new FirstPhase<>(root.scope);
+        firstPhase.visit(root);
         SecondPhase<Void> secondPhase = new SecondPhase<>(root.scope);
         secondPhase.visit(root);
-        LastPhase<Void> refPhase = new LastPhase<>(root.scope);
-        refPhase.visit(root);
+        LastPhase<Void> lastPhase = new LastPhase<>(root.scope);
+        lastPhase.visit(root);
     }
 }
