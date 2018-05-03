@@ -6,16 +6,9 @@ public class ForNode extends StmtNode{
     public ExprNode cond;
     public ExprNode iter;
     public StmtNode body;
-    public ForNode(ExprNode init, ExprNode cond, ExprNode iter, StmtNode body) {
-        this.init = init;
-        this.initWithDecl = null;
-        this.cond = cond;
-        this.iter = iter;
-        this.body = body;
-    }
 
-    public ForNode(VariableDecl initWithDecl, ExprNode cond, ExprNode iter, StmtNode body) {
-        this.init = null;
+    public ForNode(ExprNode init, VariableDecl initWithDecl, ExprNode cond, ExprNode iter, StmtNode body) {
+        this.init = init;
         this.initWithDecl = initWithDecl;
         this.cond = cond;
         this.iter = iter;

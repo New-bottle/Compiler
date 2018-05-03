@@ -183,11 +183,13 @@ public class RefPhase<T> implements ASTVisitor<T> {
         if (forNode.initWithDecl != null) {
             newBlockScope = false;
             forNode.initWithDecl.accept(this);
+        } else if (forNode.init != null) {
+            forNode.init.accept(this);
         }
-        else forNode.init.accept(this);
         inloop ++;
         forNode.cond.accept(this);
-        forNode.iter.accept(this);
+        if (forNode.iter != null)
+            forNode.iter.accept(this);
         forNode.body.accept(this);
         inloop --;
         if (forNode.initWithDecl != null)

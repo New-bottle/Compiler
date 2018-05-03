@@ -200,14 +200,17 @@ public class BuildASTVisitor extends grammarsBaseVisitor<Node> {
     @Override
     public Node visitForStat(grammarsParser.ForStatContext ctx) {
         ExprNode cond = (ExprNode) visit(ctx.cond);
-        ExprNode iter = (ExprNode) visit(ctx.iter);
+        ExprNode iter = null;
+        if (ctx.iter != null) iter = (ExprNode) ctx.iter.accept(this);
         StmtNode stmt = (StmtNode) visit(ctx.stat());
         if (ctx.declinit != null) {
             VariableDecl initWithDecl = (VariableDecl) visit(ctx.declinit);
-            return new ForNode(initWithDecl, cond, iter, stmt);
-        } else {
+            return new ForNode(null, initWithDecl, cond, iter, stmt);
+        } else if (ctx.init != null) {
             ExprNode init = (ExprNode) visit(ctx.init);
-            return new ForNode(init, cond, iter, stmt);
+            return new ForNode(init, null, cond, iter, stmt);
+        } else {
+            return new ForNode(null, null, cond, iter, stmt);
         }
     }
 
