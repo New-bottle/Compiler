@@ -277,7 +277,13 @@ public class LastPhase<T> implements ASTVisitor<T> {
             throw new RuntimeException("FunctionCall failed: Symbol is not a function.");
         }
         FunctionTypeSymbol funcSymbol = (FunctionTypeSymbol) sym;
+        int need = funcSymbol.argTypes.size();
+        int have = 0;
         if (functionCallNode.parameters != null) {
+            have = functionCallNode.parameters.size();
+            if (need != have) {
+                throw new FunctionCallError("Need " + need + " parameter(s) but got " + have + "." );
+            }
             for (int i = 0; i < functionCallNode.parameters.size(); i++) {
                 functionCallNode.parameters.get(i).accept(this);
                 Type type1 = getType(funcSymbol.argTypes.get(i));
@@ -288,6 +294,9 @@ public class LastPhase<T> implements ASTVisitor<T> {
                     }
                 }
             }
+        }
+        if (need != have) {
+            throw new FunctionCallError("Need " + need + " parameter(s) but got " + have + "." );
         }
         functionCallNode.exprType = getType(funcSymbol.returnType);
         return null;
@@ -361,6 +370,9 @@ public class LastPhase<T> implements ASTVisitor<T> {
     @Override
     public T visit(NewExpr newExpr) {
         newExpr.type.accept(this);
+        if (newExpr.type.getType() == Symbol.Types.VOID) {
+            throw new TypeError("Can't new a variable of void.");
+        }
         return null;
     }
 
