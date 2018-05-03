@@ -241,18 +241,8 @@ public class LastPhase<T> implements ASTVisitor<T> {
     public T visit(FuncDeclNode funcDeclNode) {
         newBlockScope = false;
         funcReturnType = funcDeclNode.type;
-        if (currentScope.getEnclosingScope() != null) { // class member func
-            currentScope = funcDeclNode.scope;
-            funcDeclNode.body.accept(this);
-            currentScope = currentScope.getEnclosingScope();
-            funcReturnType = null;
-            return null;
-        }
-        FunctionTypeSymbol funcSymbol =
-                (FunctionTypeSymbol)currentScope.resolve(funcDeclNode.name);
-        funcDeclNode.scope = new LocalScope(funcDeclNode.name, currentScope);
-        currentScope = funcDeclNode.scope;
 
+        currentScope = funcDeclNode.scope;
         funcDeclNode.body.accept(this);
         currentScope = currentScope.getEnclosingScope();
         funcReturnType = null;

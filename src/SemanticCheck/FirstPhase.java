@@ -92,6 +92,8 @@ public class FirstPhase<T> implements ASTVisitor<T> {
         TypeSymbol returnTypeSymbol = (TypeSymbol) currentScope.resolve(funcDeclNode.type);
 //        TypeSymbol returnTypeSymbol = (TypeSymbol) funcDeclNode.type.accept(this);
         FunctionTypeSymbol funcSymbol = new FunctionTypeSymbol(returnTypeSymbol, funcDeclNode.name);
+        funcDeclNode.scope = new LocalScope(funcDeclNode.name, currentScope);
+        currentScope = funcDeclNode.scope;
         if (funcDeclNode.parameters != null) {
             for (int i = 0; i < funcDeclNode.parameters.size(); i++) {
                 VariableDecl vard = funcDeclNode.parameters.get(i);
@@ -100,6 +102,7 @@ public class FirstPhase<T> implements ASTVisitor<T> {
                 funcSymbol.addArg(typeSymbol, vard.name);
             }
         }
+        currentScope = currentScope.getEnclosingScope();
         currentScope.define(funcDeclNode.name, funcSymbol);
         return null;
     }
