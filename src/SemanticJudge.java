@@ -9,7 +9,7 @@ import SemanticCheck.*;
 
 public class SemanticJudge {
     static public void main(String[] args) throws Exception{
-        String pos = "/home/yanhongyu/Git/homework/Compiler/test/semantic/testcase_611.txt";
+        String pos = "/home/yanhongyu/Git/homework/Compiler/test/semantic/testcase_757.txt";
         FileInputStream fin = new FileInputStream(pos);
         ANTLRInputStream input = new ANTLRInputStream(fin);
         grammarsLexer lexer = new grammarsLexer(input);
