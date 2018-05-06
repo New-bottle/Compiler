@@ -448,7 +448,6 @@ public class LastPhase<T> implements ASTVisitor<T> {
                 }
                 break;
         }
-        unaryExprNode.isLvalue = false;
         unaryExprNode.exprType = unaryExprNode.expr.exprType;
         return null;
     }
