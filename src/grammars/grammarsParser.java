@@ -1,8 +1,7 @@
-// Generated from /home/yanhongyu/Git/homework/Compiler/src/grammars.g4 by ANTLR 4.7
+package grammars;// Generated from /home/yanhongyu/Git/homework/Compiler/src/grammars.g4 by ANTLR 4.7
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.misc.*;
 import org.antlr.v4.runtime.tree.*;
 import java.util.List;
 import java.util.Iterator;
@@ -87,7 +86,7 @@ public class grammarsParser extends Parser {
 	}
 
 	@Override
-	public String getGrammarFileName() { return "grammars.g4"; }
+	public String getGrammarFileName() { return "grammars/grammars.g4"; }
 
 	@Override
 	public String[] getRuleNames() { return ruleNames; }

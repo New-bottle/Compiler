@@ -1,16 +1,24 @@
-import AST.AST;
-import Symbols.GlobalScope;
+import FrontEnd.AST.AST;
+import FrontEnd.SemanticCheck.FirstPhase;
+import FrontEnd.SemanticCheck.LastPhase;
+import FrontEnd.SemanticCheck.SecondPhase;
+import FrontEnd.Symbols.GlobalScope;
+import FrontEnd.grammars.grammarsLexer;
+import FrontEnd.grammars.grammarsParser;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.io.FileInputStream;
+import java.io.InputStream;
+
+import AST.*;
+import Symbols.*;
 import SemanticCheck.*;
 
-public class SemanticJudge {
+public class SemanticTest {
     static public void main(String[] args) throws Exception{
-        String pos = "/home/yanhongyu/Git/homework/Compiler/test/semantic/testcase_757.txt";
-        FileInputStream fin = new FileInputStream(pos);
+        InputStream fin = new FileInputStream("program.txt");
         ANTLRInputStream input = new ANTLRInputStream(fin);
         grammarsLexer lexer = new grammarsLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);

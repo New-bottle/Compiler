@@ -1,5 +1,10 @@
 import AST.*;
-import Symbols.Symbol;
+import FrontEnd.AST.*;
+import FrontEnd.Exception.MemberError;
+import FrontEnd.Exception.TypeError;
+import FrontEnd.Symbols.Symbol;
+import FrontEnd.grammars.grammarsBaseVisitor;
+import FrontEnd.grammars.grammarsParser;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 import java.util.ArrayList;

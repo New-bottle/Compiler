@@ -1,12 +1,9 @@
-// Generated from /home/yanhongyu/Git/homework/Compiler/src/grammars.g4 by ANTLR 4.7
+package grammars;// Generated from /home/yanhongyu/Git/homework/Compiler/src/grammars.g4 by ANTLR 4.7
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
-import org.antlr.v4.runtime.misc.*;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class grammarsLexer extends Lexer {
@@ -99,7 +96,7 @@ public class grammarsLexer extends Lexer {
 	}
 
 	@Override
-	public String getGrammarFileName() { return "grammars.g4"; }
+	public String getGrammarFileName() { return "grammars/grammars.g4"; }
 
 	@Override
 	public String[] getRuleNames() { return ruleNames; }
