@@ -1,5 +1,6 @@
+package FrontEnd;
+
 import AST.*;
-import FrontEnd.AST.*;
 
 import java.io.PrintStream;
 

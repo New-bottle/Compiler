@@ -1,10 +1,9 @@
-import FrontEnd.AST.AST;
-import FrontEnd.SemanticCheck.FirstPhase;
-import FrontEnd.SemanticCheck.LastPhase;
-import FrontEnd.SemanticCheck.SecondPhase;
-import FrontEnd.Symbols.GlobalScope;
-import FrontEnd.grammars.grammarsLexer;
-import FrontEnd.grammars.grammarsParser;
+package FrontEnd;
+
+import AST.AST;
+import Symbols.GlobalScope;
+import grammars.grammarsLexer;
+import grammars.grammarsParser;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
