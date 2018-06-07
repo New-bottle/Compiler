@@ -1,6 +1,7 @@
 package AST;
 
 import Symbols.Symbol;
+import CompilerOptions.CompilerOptions;
 
 public class ClassType extends Type {
     public String name;
@@ -25,5 +26,10 @@ public class ClassType extends Type {
     @Override
     public String toString() {
         return "<ClassType:"+name+">";
+    }
+
+    @Override
+    public int getRegisterSize() {
+        return CompilerOptions.getSizePointer();
     }
 }

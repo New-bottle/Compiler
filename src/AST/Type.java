@@ -15,6 +15,9 @@ public abstract class Type extends Node {
         }
         throw new TypeError("Can't resolve typeSymbol");
     }
+
+    public abstract int getRegisterSize();
+
     @Override
     public boolean equals(Object o) {
         if (o instanceof ClassType && this instanceof ClassType) {

@@ -30,7 +30,7 @@ public class BinaryOpNode extends ExprNode {
     }
 
     @Override
-    public Object accept(ASTVisitor visitor) { visitor.visit(this);
-        return null;
+    public Object accept(ASTVisitor visitor) {
+        return visitor.visit(this);
     }
 }
