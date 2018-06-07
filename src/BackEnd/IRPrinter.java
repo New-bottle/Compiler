@@ -30,6 +30,17 @@ public class IRPrinter implements IRVisitor {
     }
 
     @Override
+    public void visit(IntComparison intComparison) {
+        System.out.println(intComparison.toString());
+        printnext(intComparison);
+    }
+
+    @Override
+    public void visit(IntImmediate intImmediate) {
+
+    }
+
+    @Override
     public void visit(IntValue intValue) {
 
     }
@@ -41,14 +52,21 @@ public class IRPrinter implements IRVisitor {
 
     @Override
     public void visit(IRInstruction irInstruction) {
+        System.out.println(irInstruction.toString());
         if (irInstruction == null) return;
         if (irInstruction.next != null)
             irInstruction.next.accept(this);
     }
 
     @Override
-    public void visit(Jump jump) {
+    public void visit(IRRoot irRoot) {
 
+    }
+
+    @Override
+    public void visit(Jump jump) {
+        System.out.println(jump.toString());
+        printnext(jump);
     }
 
     @Override
@@ -58,8 +76,24 @@ public class IRPrinter implements IRVisitor {
     }
 
     @Override
+    public void visit(Load load) {
+
+    }
+
+    @Override
+    public void visit(Move move) {
+        System.out.println(move.toString());
+        printnext(move);
+    }
+
+    @Override
     public void visit(Register register) {
 
+    }
+
+    @Override
+    public void visit(Store store) {
+        System.out.println(store.toString());
     }
 
     @Override
@@ -69,6 +103,6 @@ public class IRPrinter implements IRVisitor {
 
     @Override
     public void visit(VirtualRegister virtualRegister) {
-
+        System.out.println(virtualRegister.toString());
     }
 }

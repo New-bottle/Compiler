@@ -15,7 +15,7 @@ import java.io.FileInputStream;
 
 public class IrGenerateTest {
     static public void main(String[] args) throws Exception{
-        String pos = "/home/yanhongyu/Git/homework/Compiler/test/IR/test00.txt";
+        String pos = "/home/yanhongyu/Git/homework/Compiler/test/IR/testshort-circuit.txt";
         FileInputStream fin = new FileInputStream(pos);
         ANTLRInputStream input = new ANTLRInputStream(fin);
         grammarsLexer lexer = new grammarsLexer(input);
@@ -36,7 +36,7 @@ public class IrGenerateTest {
         LastPhase<Void> lastPhase = new LastPhase<>(root.scope);
         lastPhase.visit(root);
 
-        BuildIRVisitor buildIRVisitor = new BuildIRVisitor();
+        BuildIRVisitor buildIRVisitor = new BuildIRVisitor(root.scope);
         IRInstruction irroot = (IRInstruction) buildIRVisitor.visit(root);
         IRPrinter irPrinter = new IRPrinter();
         irPrinter.visit(irroot);

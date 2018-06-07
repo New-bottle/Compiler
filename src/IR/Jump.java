@@ -10,4 +10,9 @@ public class Jump extends BranchInstruction {
     public void accept(IRVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    public String toString() {
+        return "<Jump : " + target.toString() + ">";
+    }
 }

@@ -15,4 +15,9 @@ public class Branch extends BranchInstruction {
     public void accept(IRVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    public String toString() {
+        return "<Branch : " + cond.toString() + "> " + then.toString() + ' ' + otherwise.toString();
+    }
 }

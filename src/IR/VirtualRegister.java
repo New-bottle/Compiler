@@ -10,4 +10,9 @@ public class VirtualRegister extends Register {
     public String getHintName() {
         return hintName;
     }
+
+    @Override
+    public String toString() {
+        return "<VR: " + hintName + ">";
+    }
 }

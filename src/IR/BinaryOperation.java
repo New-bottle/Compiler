@@ -26,6 +26,9 @@ public class BinaryOperation extends IRInstruction {
 
     @Override
     public String toString() {
-        return lhs.toString() + ' ' + op.toString() + ' ' + rhs.toString();
+        return dest.toString() + '='
+                + lhs.toString() + ' '
+                + op.toString() + ' '
+                + rhs.toString();
     }
 }

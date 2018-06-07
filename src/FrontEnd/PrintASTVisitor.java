@@ -197,6 +197,19 @@ public class PrintASTVisitor<T> implements ASTVisitor<T> {
 
     public T visit(IfNode ifNode) {
         //TODO
+        out.print(indent() + "IF cond:");
+        ifNode.cond.accept(this);
+        out.println();
+        out.println(indent() + "then : ");
+        right();
+        ifNode.then.accept(this);
+        left();
+        if (ifNode.otherwise != null) {
+            out.println(indent() + "else :");
+            right();
+            ifNode.otherwise.accept(this);
+            left();
+        }
         return null;
     }
 

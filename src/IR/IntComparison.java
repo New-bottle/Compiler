@@ -21,4 +21,11 @@ public class IntComparison extends IRInstruction {
     public void accept(IRVisitor visitor) {
         visitor.visit(this);
     }
+    @Override
+    public String toString() {
+        return dest.toString() + '='
+                + lhs.toString() + ' '
+                + cond.toString() + ' '
+                + rhs.toString();
+    }
 }

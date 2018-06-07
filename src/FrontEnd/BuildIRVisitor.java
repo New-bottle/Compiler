@@ -4,6 +4,7 @@ import AST.*;
 import IR.*;
 import Symbols.Scope;
 import Symbols.Symbol;
+import Symbols.VariableSymbol;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,6 +16,8 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
     private IRInstruction curIns;
     private boolean getAddress;
     private Scope globalscope;
+    private Scope currentscope;
+
     Map<Symbol, VirtualRegister> varmap;
 
     public BuildIRVisitor(IRInstruction head) {
@@ -25,15 +28,15 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
         irRoot = new IRRoot();
         curIns = irRoot;
         varmap = new HashMap<>();
-        this.globalscope = globalscope;
+        this.currentscope = this.globalscope = globalscope;
     }
 
     private boolean isLogicalExpr(ExprNode node) {
         if (node instanceof BinaryOpNode) {
-            AST.BinaryOpNode.BinaryOp op = ((BinaryOpNode)node).op;
+            BinaryOpNode.BinaryOp op = ((BinaryOpNode)node).op;
             return op == BinaryOpNode.BinaryOp.LAND || op == BinaryOpNode.BinaryOp.LOR;
         } else if (node instanceof UnaryExprNode) {
-            AST.UnaryOpNode.UnaryOp op = ((UnaryExprNode)node).op;
+            UnaryOpNode.UnaryOp op = ((UnaryExprNode)node).op;
             return op == UnaryOpNode.UnaryOp.LNOT;
         } else {
             return false;
@@ -45,12 +48,16 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
         return false;
     }
     private void assign(boolean isMemOp, int size, IntValue addr, int offset, ExprNode rhs) {
-        if (rhs.ifTrue != null) {
-            // for short-circuit evaluation
-            Label merge = new Label("merge");
-            if (isMemOp) {
-//                rhs.ifTrue.
-            }
+        // for short-circuit evaluation
+        // Label merge = new Label("merge");
+        if (isMemOp) {
+            Store store = new Store(rhs.intValue, size, addr, offset);
+            curIns.linkNext(store);
+            curIns = store;
+        } else {
+            Move move = new Move((VirtualRegister)addr, rhs.intValue);
+            curIns.linkNext(move);
+            curIns = move;
         }
     }
     private void processAssign(BinaryOpNode binaryOpNode) {
@@ -70,21 +77,27 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
         // build assignment
         IntValue addr = isMemOp ? binaryOpNode.left.addressValue : binaryOpNode.left.intValue;
         int offset = isMemOp ? binaryOpNode.left.addressOffset : 0;
-        assign(isMemOp, binaryOpNode.right.exprType.getRegisterSize(), addr, offset, binaryOpNode.right);
+        int size = globalscope.resolve(binaryOpNode.right.exprType).getRegisterSize();
+        assign(isMemOp, size, addr, offset, binaryOpNode.right);
     }
     private void processLogicalBinaryExpr(BinaryOpNode binaryOpNode) {
         // check lhs
+        Label lb = null;
         if (binaryOpNode.op == BinaryOpNode.BinaryOp.LAND) {
-            binaryOpNode.left.ifTrue = new Label("lhs_true");
+            lb = new Label("lhs_true");
+            binaryOpNode.left.ifTrue = lb;
             binaryOpNode.left.ifFalse = binaryOpNode.ifFalse;
             binaryOpNode.left.accept(this);
         } else {
+            lb = new Label("lhs_false");
             binaryOpNode.left.ifTrue = binaryOpNode.ifTrue;
-            binaryOpNode.left.ifFalse = new Label("lhs_false");
+            binaryOpNode.left.ifFalse = lb;
             binaryOpNode.left.accept(this);
         }
         binaryOpNode.right.ifTrue = binaryOpNode.ifTrue;
         binaryOpNode.right.ifFalse = binaryOpNode.ifFalse;
+        curIns.linkNext(lb);
+        curIns = lb;
         binaryOpNode.right.accept(this);
     }
     private void processStringBinaryExpr(BinaryOpNode binaryOpNode) {
@@ -134,7 +147,7 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
         }
         VirtualRegister reg = new VirtualRegister(null);
         binaryOpNode.intValue = reg;
-        BinaryOperation bop = new BinaryOperation(null, null, op, binaryOpNode.left.intValue, binaryOpNode.right.intValue);
+        BinaryOperation bop = new BinaryOperation(reg, op, binaryOpNode.left.intValue, binaryOpNode.right.intValue);
         curIns.linkNext(bop);
         curIns = bop;
     }
@@ -185,9 +198,13 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
 
     @Override
     public IRBaseClass visit(BlockNode blockNode) {
+        if (blockNode.scope != null)
+            currentscope = blockNode.scope;
         for (int i = 0; i < blockNode.stmts.size(); i++) {
             blockNode.stmts.get(i).accept(this);
         }
+        if (blockNode.scope != null)
+            currentscope = currentscope.getEnclosingScope();
         return null;
     }
 
@@ -257,6 +274,9 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
 
     @Override
     public IRBaseClass visit(FuncDeclNode funcDeclNode) {
+        if (funcDeclNode.scope != null) {
+            currentscope = funcDeclNode.scope;
+        }
         Label function = new Label(funcDeclNode.name);
         curIns.linkNext(function);
         curIns = function;
@@ -268,6 +288,9 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
         }
 
         funcDeclNode.body.accept(this);
+        if (funcDeclNode.scope != null) {
+            currentscope = currentscope.getEnclosingScope();
+        }
         return null;
     }
 
@@ -286,36 +309,37 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
         Label ifTrue = new Label("ifTrue");
         Label ifFalse = new Label("ifFalse");
         Label ifend = new Label("ifend");
-        IntValue ifcond = (IntValue) ifNode.cond.accept(this);
-        Branch ifjump = null;
+        ifNode.cond.ifTrue = ifTrue;
+        ifNode.cond.ifFalse = (ifNode.otherwise == null) ? ifend : ifFalse;
+
+        ifNode.cond.accept(this);
+        IntValue ifcond = ifNode.cond.intValue;
         Jump jumpend = new Jump(ifend);
-        if (ifNode.otherwise == null) {
-            ifjump = new Branch(ifcond, ifTrue, ifend);
-        } else {
-            ifjump = new Branch(ifcond, ifTrue, ifFalse);
-        }
-        curIns.linkNext(ifjump);
-        curIns = ifjump;
 
         curIns.linkNext(ifTrue);
         curIns = ifTrue;
+
+        currentscope = ifNode.scope;
         ifNode.then.accept(this);
+        currentscope = currentscope.getEnclosingScope();
+
         curIns.linkNext(jumpend);
         curIns = jumpend;
 
-        if (ifNode.otherwise == null) {
-            curIns.linkNext(ifend);
-            curIns = ifend;
-        } else {
+        if (ifNode.otherwise != null) {
             curIns.linkNext(ifFalse);
             curIns = ifFalse;
-            ifNode.otherwise.accept(this);
-            curIns.linkNext(jumpend);
-            curIns = jumpend;
 
-            curIns.linkNext(ifend);
-            curIns = ifend;
+            currentscope = ifNode.otherwiseScope;
+            ifNode.otherwise.accept(this);
+            currentscope = currentscope.getEnclosingScope();
+
+            Jump falsejumpend = new Jump(ifend);
+            curIns.linkNext(falsejumpend);
+            curIns = falsejumpend;
         }
+        curIns.linkNext(ifend);
+        curIns = ifend;
         return null;
     }
 
@@ -383,8 +407,15 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
 
     @Override
     public IRBaseClass visit(VariableDecl variableDecl) {
-        if (variableDecl.init != null)
+        VariableSymbol varsym = (VariableSymbol) currentscope.resolve(variableDecl.name);
+        VirtualRegister reg = new VirtualRegister(variableDecl.name);
+        varmap.put(varsym, reg);
+        if (variableDecl.init != null) {
             variableDecl.init.accept(this);
+            Move move = new Move(reg, variableDecl.init.intValue);
+            curIns.linkNext(move);
+            curIns = move;
+        }
         return null;
     }
 
