@@ -8,4 +8,14 @@ public class VariableSymbol extends Symbol {
         this.name = name;
         this.type = Types.NULL;
     }
+
+    @Override
+    public int getRegisterSize() {
+        return -1;
+    }
+
+    @Override
+    public int getMemorySize() {
+        return -1;
+    }
 }

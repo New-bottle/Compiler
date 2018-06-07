@@ -13,6 +13,10 @@ public abstract class Symbol {
     }
     public Types type;
 
+    public abstract int getRegisterSize();
+
+    public abstract int getMemorySize();
+
     static public Type getType(Symbol tmp) {
         switch (tmp.type) {
             case BOOL    :    return new BuiltInType(Types.BOOL);

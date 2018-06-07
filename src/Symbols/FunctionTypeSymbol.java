@@ -1,5 +1,7 @@
 package Symbols;
 
+import CompilerOptions.CompilerOptions;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,5 +25,15 @@ public class FunctionTypeSymbol extends TypeSymbol {
     @Override
     public String toString() {
         return "<FunctionType : " + name + ">";
+    }
+
+    @Override
+    public int getRegisterSize() {
+        return CompilerOptions.getSizePointer();
+    }
+
+    @Override
+    public int getMemorySize() {
+        return CompilerOptions.getSizePointer();
     }
 }

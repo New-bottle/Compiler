@@ -1,5 +1,7 @@
 package Symbols;
 
+import CompilerOptions.CompilerOptions;
+
 public class ArraySymbol extends TypeSymbol {
     public TypeSymbol returntype;
     public SymbolTable members;
@@ -15,5 +17,15 @@ public class ArraySymbol extends TypeSymbol {
     @Override
     public String toString() {
         return "<ArrayType: " + returntype.toString() + ">";
+    }
+
+    @Override
+    public int getRegisterSize() {
+        return CompilerOptions.getSizePointer();
+    }
+
+    @Override
+    public int getMemorySize() {
+        return CompilerOptions.getSizePointer();
     }
 }
