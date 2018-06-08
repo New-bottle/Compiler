@@ -262,6 +262,9 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
 
     @Override
     public IRBaseClass visit(BreakNode breakNode) {
+        Jump brek = new Jump(curLoopBreakTarget);
+        curIns.linkNext(brek);
+        curIns = brek;
         return null;
     }
 
@@ -282,6 +285,9 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
 
     @Override
     public IRBaseClass visit(ContinueNode continueNode) {
+        Jump cont = new Jump(curLoopContinueTarget);
+        curIns.linkNext(cont);
+        curIns = cont;
         return null;
     }
 
