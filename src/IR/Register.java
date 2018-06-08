@@ -1,4 +1,4 @@
 package IR;
 
-public class Register extends IntValue {
+public abstract class Register extends IntValue {
 }

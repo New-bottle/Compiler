@@ -6,12 +6,12 @@ public class BinaryOperation extends IRInstruction {
         SHL, SHR, AND, OR,  XOR
     }
 
-    private VirtualRegister dest;
+    private Register dest;
     private BinaryOp op;
     private IntValue lhs;
     private IntValue rhs;
 
-    public BinaryOperation(VirtualRegister dest, BinaryOp op, IntValue lhs, IntValue rhs) {
+    public BinaryOperation(Register dest, BinaryOp op, IntValue lhs, IntValue rhs) {
         super();
         this.dest = dest;
         this.op = op;

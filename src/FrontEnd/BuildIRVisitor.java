@@ -152,6 +152,51 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
         curIns = bop;
     }
 
+    private void processSelfIncDec(ExprNode body, ExprNode node, boolean isInc, boolean isPostfix) {
+        boolean isMemOp = needMemoryAccess(node);
+        // getaddress
+        boolean getaddr = getAddress;
+        getAddress = isMemOp;
+        body.accept(this);
+        IntValue addr = node.addressValue;
+        int offset = node.addressOffset;
+
+        // get value
+        getAddress = false;
+        body.accept(this);
+        getAddress = getaddr;
+
+        // stuffs
+        BinaryOperation.BinaryOp op = isInc ? BinaryOperation.BinaryOp.ADD : BinaryOperation.BinaryOp.SUB;
+        IntImmediate one = new IntImmediate(1);
+        VirtualRegister reg = new VirtualRegister(null);
+
+        if (isPostfix) {
+            Move move = new Move(reg, body.intValue);
+            curIns.linkNext(move);
+            curIns = move;
+            node.intValue = reg;
+        } else {
+            node.intValue = body.intValue;
+        }
+
+        // if need memory operation, introduce temporary register
+        if (isMemOp) {
+            BinaryOperation bop = new BinaryOperation(reg, op, body.intValue, one);
+            Store store = new Store(reg, body.exprType.getRegisterSize(), addr, offset);
+            curIns.linkNext(bop);
+            curIns = bop;
+            curIns.linkNext(store);
+            curIns = store;
+
+            if (!isPostfix) node.intValue = reg;
+        } else {
+            BinaryOperation bop = new BinaryOperation((Register) body.intValue, op, body.intValue, one);
+            curIns.linkNext(bop);
+            curIns = bop;
+        }
+    }
+
     @Override
     public IRBaseClass visit(AST node) {
         for (int i = 0; i < node.comps.size(); i++) {
@@ -256,19 +301,34 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
         } else {
             forNode.init.accept(this);
         }
-        forNode.cond.accept(this);
 
         Label forbody = new Label("forbody");
+        Label forjudge = new Label("forjudge");
         Label forend = new Label("forend");
+
+        Jump initjump = new Jump(forjudge);
+        curIns.linkNext(initjump);
+        curIns = initjump;
+
         curIns.linkNext(forbody);
         curIns = forbody;
         forNode.body.accept(this);
         forNode.iter.accept(this);
-        IntValue forcond = (IntValue) forNode.cond.accept(this);
+
+        Jump jumptojudge = new Jump(forjudge);
+        curIns.linkNext(jumptojudge);
+        curIns = jumptojudge;
+
+        curIns.linkNext(forjudge);
+        curIns = forjudge;
+        forNode.cond.accept(this);
+        IntValue forcond = forNode.cond.intValue;
         Branch forjump = new Branch(forcond, forbody, forend);
         curIns.linkNext(forjump);
         curIns = forjump;
 
+        curIns.linkNext(forend);
+        curIns = forend;
         return null;
     }
 
@@ -377,6 +437,16 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
 
     @Override
     public IRBaseClass visit(PostOpNode postOpNode) {
+        postOpNode.expr.accept(this);
+        switch (postOpNode.op) {
+            case ADD:
+                processSelfIncDec(postOpNode.expr, postOpNode, true, true);
+                break;
+            case SUB:
+                processSelfIncDec(postOpNode.expr, postOpNode, false, true);
+                break;
+            default:
+        }
         return null;
     }
 
@@ -402,6 +472,40 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
 
     @Override
     public IRBaseClass visit(UnaryExprNode unaryExprNode) {
+        if (unaryExprNode.op == UnaryOpNode.UnaryOp.LNOT) {
+            unaryExprNode.expr.ifTrue = unaryExprNode.ifFalse;
+            unaryExprNode.expr.ifFalse = unaryExprNode.ifTrue;
+            unaryExprNode.expr.accept(this);
+            return null;
+        }
+
+        unaryExprNode.expr.accept(this);
+        VirtualRegister reg = new VirtualRegister(null);
+        UnaryOperation uop;
+        switch (unaryExprNode.op) {
+            case ADD:
+                processSelfIncDec(unaryExprNode.expr, unaryExprNode, true, false);
+                break;
+            case SUB:
+                processSelfIncDec(unaryExprNode.expr, unaryExprNode, false, false);
+                break;
+            case POS:
+                unaryExprNode.intValue = unaryExprNode.expr.intValue;
+                break;
+            case NEG:
+                unaryExprNode.intValue = reg;
+                uop = new UnaryOperation(reg, UnaryOperation.UnaryOp.NEG, unaryExprNode.expr.intValue);
+                curIns.linkNext(uop);
+                curIns = uop;
+                break;
+            case BNOT:
+            default:
+                unaryExprNode.intValue = reg;
+                uop = new UnaryOperation(reg, UnaryOperation.UnaryOp.NOT, unaryExprNode.expr.intValue);
+                curIns.linkNext(uop);
+                curIns = uop;
+                break;
+        }
         return null;
     }
 

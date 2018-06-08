@@ -19,4 +19,9 @@ public class UnaryOperation extends IRInstruction {
     public void accept(IRVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    public String toString() {
+        return "<Unary : " + dest.toString() + ' ' + op.toString() + ' ' + operand.toString();
+    }
 }
