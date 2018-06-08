@@ -1,6 +1,7 @@
 package FrontEnd;
 
 import AST.*;
+import CompilerOptions.CompilerOptions;
 import IR.*;
 import Symbols.Scope;
 import Symbols.Symbol;
@@ -22,6 +23,10 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
 
     Map<Symbol, VirtualRegister> varmap;
 
+    private void append(IRInstruction ins) {
+        curIns.linkNext(ins);
+        curIns = ins;
+    }
     public BuildIRVisitor(IRInstruction head) {
         this.head = this.last = this.curIns = head;
     }
@@ -53,13 +58,9 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
         // for short-circuit evaluation
         // Label merge = new Label("merge");
         if (isMemOp) {
-            Store store = new Store(rhs.intValue, size, addr, offset);
-            curIns.linkNext(store);
-            curIns = store;
+            append(new Store(rhs.intValue, size, addr, offset));
         } else {
-            Move move = new Move((VirtualRegister)addr, rhs.intValue);
-            curIns.linkNext(move);
-            curIns = move;
+            append(new Move((VirtualRegister)addr, rhs.intValue));
         }
     }
     private void processAssign(BinaryOpNode binaryOpNode) {
@@ -98,8 +99,7 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
         }
         binaryOpNode.right.ifTrue = binaryOpNode.ifTrue;
         binaryOpNode.right.ifFalse = binaryOpNode.ifFalse;
-        curIns.linkNext(lb);
-        curIns = lb;
+        append(lb);
         binaryOpNode.right.accept(this);
     }
     private void processStringBinaryExpr(BinaryOpNode binaryOpNode) {
@@ -118,14 +118,10 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
             case GE: cond = IntComparison.Condition.GE; break;
         }
         VirtualRegister reg = new VirtualRegister(null);
-        IntComparison icmp = new IntComparison(reg, cond, binaryOpNode.left.intValue, binaryOpNode.right.intValue);
-        curIns.linkNext(icmp);
-        curIns = icmp;
+        append(new IntComparison(reg, cond, binaryOpNode.left.intValue, binaryOpNode.right.intValue));
         if (binaryOpNode.ifTrue != null) {
             // if the expression is in a condition part
-            Branch cjump = new Branch(reg, binaryOpNode.ifTrue, binaryOpNode.ifFalse);
-            curIns.linkNext(cjump);
-            curIns = cjump;
+            append(new Branch(reg, binaryOpNode.ifTrue, binaryOpNode.ifFalse));
         } else {
             // if the expression is in an assignment
             binaryOpNode.intValue = reg;
@@ -149,9 +145,7 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
         }
         VirtualRegister reg = new VirtualRegister(null);
         binaryOpNode.intValue = reg;
-        BinaryOperation bop = new BinaryOperation(reg, op, binaryOpNode.left.intValue, binaryOpNode.right.intValue);
-        curIns.linkNext(bop);
-        curIns = bop;
+        append(new BinaryOperation(reg, op, binaryOpNode.left.intValue, binaryOpNode.right.intValue));
     }
 
     private void processSelfIncDec(ExprNode body, ExprNode node, boolean isInc, boolean isPostfix) {
@@ -174,9 +168,7 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
         VirtualRegister reg = new VirtualRegister(null);
 
         if (isPostfix) {
-            Move move = new Move(reg, body.intValue);
-            curIns.linkNext(move);
-            curIns = move;
+            append(new Move(reg, body.intValue));
             node.intValue = reg;
         } else {
             node.intValue = body.intValue;
@@ -184,18 +176,12 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
 
         // if need memory operation, introduce temporary register
         if (isMemOp) {
-            BinaryOperation bop = new BinaryOperation(reg, op, body.intValue, one);
-            Store store = new Store(reg, body.exprType.getRegisterSize(), addr, offset);
-            curIns.linkNext(bop);
-            curIns = bop;
-            curIns.linkNext(store);
-            curIns = store;
+            append(new BinaryOperation(reg, op, body.intValue, one));
+            append(new Store(reg, body.exprType.getRegisterSize(), addr, offset));
 
             if (!isPostfix) node.intValue = reg;
         } else {
-            BinaryOperation bop = new BinaryOperation((Register) body.intValue, op, body.intValue, one);
-            curIns.linkNext(bop);
-            curIns = bop;
+            append(new BinaryOperation((Register) body.intValue, op, body.intValue, one));
         }
     }
 
@@ -209,6 +195,27 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
 
     @Override
     public IRBaseClass visit(ArefNode arefNode) {
+        boolean getaddr = getAddress;
+        getAddress = false;
+        arefNode.name.accept(this);
+        arefNode.iter.accept(this);
+        getAddress = getaddr;
+
+        IntValue tmp1 = new IntImmediate(((ArrayType)arefNode.name.exprType).baseType.getRegisterSize());
+        VirtualRegister reg = new VirtualRegister(null);
+        append(new BinaryOperation(reg, BinaryOperation.BinaryOp.MUL, arefNode.iter.intValue, tmp1));
+        append(new BinaryOperation(reg, BinaryOperation.BinaryOp.ADD, arefNode.name.intValue, reg));
+
+        if (getAddress) {
+            arefNode.addressValue = reg;
+            arefNode.addressOffset = CompilerOptions.getSizeInt();
+        } else {
+            append(new Load(reg, arefNode.exprType.getRegisterSize(), reg, CompilerOptions.getSizeInt()));
+            arefNode.intValue = reg;
+            if (arefNode.ifTrue != null) {
+                append(new Branch(arefNode.intValue, arefNode.ifTrue, arefNode.ifFalse));
+            }
+        }
         return null;
     }
 
@@ -262,9 +269,7 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
 
     @Override
     public IRBaseClass visit(BreakNode breakNode) {
-        Jump brek = new Jump(curLoopBreakTarget);
-        curIns.linkNext(brek);
-        curIns = brek;
+        append(new Jump(curLoopBreakTarget));
         return null;
     }
 
@@ -285,9 +290,7 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
 
     @Override
     public IRBaseClass visit(ContinueNode continueNode) {
-        Jump cont = new Jump(curLoopContinueTarget);
-        curIns.linkNext(cont);
-        curIns = cont;
+        append(new Jump(curLoopContinueTarget));
         return null;
     }
 
@@ -323,43 +326,31 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
         curLoopContinueTarget = forstep;
 
         // init to judge
-        Jump initjump = new Jump(forjudge);
-        curIns.linkNext(initjump);
-        curIns = initjump;
+        append(new Jump(forjudge));
 
         // body
-        curIns.linkNext(forbody);
-        curIns = forbody;
+        append(forbody);
         forNode.body.accept(this);
 
         curLoopBreakTarget = tmpLoopBreakTarget;
         curLoopContinueTarget = tmpLoopContinueTarget;
 
         // body to step
-        Jump bodytostep = new Jump(forstep);
-        curIns.linkNext(bodytostep);
-        curIns = bodytostep;
+        append(new Jump(forstep));
 
         // step
-        curIns.linkNext(forstep);
-        forNode.iter.accept(this);
+        append(forstep);
 
         // step to judge
-        Jump steptojudge = new Jump(forjudge);
-        curIns.linkNext(steptojudge);
-        curIns = steptojudge;
+        append(new Jump(forjudge));
 
         // judge
-        curIns.linkNext(forjudge);
-        curIns = forjudge;
+        append(forjudge);
         forNode.cond.accept(this);
         IntValue forcond = forNode.cond.intValue;
-        Branch forjump = new Branch(forcond, forbody, forend);
-        curIns.linkNext(forjump);
-        curIns = forjump;
+        append(new Branch(forcond, forbody, forend));
 
-        curIns.linkNext(forend);
-        curIns = forend;
+        append(forend);
         return null;
     }
 
@@ -368,9 +359,7 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
         if (funcDeclNode.scope != null) {
             currentscope = funcDeclNode.scope;
         }
-        Label function = new Label(funcDeclNode.name);
-        curIns.linkNext(function);
-        curIns = function;
+        append(new Label(funcDeclNode.name));
 
         if (funcDeclNode.parameters != null) {
             for (int i = 0; i < funcDeclNode.parameters.size(); i++) {
@@ -407,30 +396,25 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
         IntValue ifcond = ifNode.cond.intValue;
         Jump jumpend = new Jump(ifend);
 
-        curIns.linkNext(ifTrue);
-        curIns = ifTrue;
+        append(ifTrue);
 
         currentscope = ifNode.scope;
         ifNode.then.accept(this);
         currentscope = currentscope.getEnclosingScope();
 
-        curIns.linkNext(jumpend);
-        curIns = jumpend;
+        append(jumpend);
 
         if (ifNode.otherwise != null) {
-            curIns.linkNext(ifFalse);
-            curIns = ifFalse;
+            append(ifFalse);
 
             currentscope = ifNode.otherwiseScope;
             ifNode.otherwise.accept(this);
             currentscope = currentscope.getEnclosingScope();
 
-            Jump falsejumpend = new Jump(ifend);
-            curIns.linkNext(falsejumpend);
-            curIns = falsejumpend;
+            // false jump end
+            append(new Jump(ifend));
         }
-        curIns.linkNext(ifend);
-        curIns = ifend;
+        append(ifend);
         return null;
     }
 
@@ -512,7 +496,6 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
 
         unaryExprNode.expr.accept(this);
         VirtualRegister reg = new VirtualRegister(null);
-        UnaryOperation uop;
         switch (unaryExprNode.op) {
             case ADD:
                 processSelfIncDec(unaryExprNode.expr, unaryExprNode, true, false);
@@ -525,16 +508,12 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
                 break;
             case NEG:
                 unaryExprNode.intValue = reg;
-                uop = new UnaryOperation(reg, UnaryOperation.UnaryOp.NEG, unaryExprNode.expr.intValue);
-                curIns.linkNext(uop);
-                curIns = uop;
+                append(new UnaryOperation(reg, UnaryOperation.UnaryOp.NEG, unaryExprNode.expr.intValue));
                 break;
             case BNOT:
             default:
                 unaryExprNode.intValue = reg;
-                uop = new UnaryOperation(reg, UnaryOperation.UnaryOp.NOT, unaryExprNode.expr.intValue);
-                curIns.linkNext(uop);
-                curIns = uop;
+                append(new UnaryOperation(reg, UnaryOperation.UnaryOp.NOT, unaryExprNode.expr.intValue));
                 break;
         }
         return null;
@@ -547,9 +526,7 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
         varmap.put(varsym, reg);
         if (variableDecl.init != null) {
             variableDecl.init.accept(this);
-            Move move = new Move(reg, variableDecl.init.intValue);
-            curIns.linkNext(move);
-            curIns = move;
+            append(new Move(reg, variableDecl.init.intValue));
         }
         return null;
     }
@@ -571,34 +548,26 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
         Label tmpLoopContinueTarget = curLoopContinueTarget;
 
         // init to judge
-        Jump initjump = new Jump(whilejudge);
-        curIns.linkNext(initjump);
-        curIns = initjump;
+        append(new Jump(whilejudge));
 
         // body
-        curIns.linkNext(whilebody);
-        curIns = whilebody;
+        append(whilebody);
         whileNode.body.accept(this);
 
         curLoopContinueTarget = tmpLoopContinueTarget;
         curLoopBreakTarget = tmpLoopBreakTarget;
 
         // body to judge
-        Jump bodytojudge = new Jump(whilejudge);
-        curIns.linkNext(bodytojudge);
-        curIns = bodytojudge;
+        append(new Jump(whilejudge));
 
         // judge
-        curIns.linkNext(whilejudge);
-        curIns = whilejudge;
+        append(whilejudge);
         whileNode.cond.accept(this);
         IntValue whilecond = whileNode.cond.intValue;
-        Branch whilejump = new Branch(whilecond, whilebody, whileend);
-        curIns.linkNext(whilejump);
-        curIns = whilejump;
 
-        curIns.linkNext(whileend);
-        curIns = whileend;
+        append(new Branch(whilecond, whilebody, whileend));
+
+        append(whileend);
         return null;
     }
 }
