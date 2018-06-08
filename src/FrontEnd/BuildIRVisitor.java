@@ -17,6 +17,8 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
     private boolean getAddress;
     private Scope globalscope;
     private Scope currentscope;
+    private Label curLoopContinueTarget;
+    private Label curLoopBreakTarget;
 
     Map<Symbol, VirtualRegister> varmap;
 
@@ -296,6 +298,7 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
 
     @Override
     public IRBaseClass visit(ForNode forNode) {
+        // for init
         if (forNode.initWithDecl != null) {
             forNode.initWithDecl.accept(this);
         } else {
@@ -303,22 +306,44 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
         }
 
         Label forbody = new Label("forbody");
+        Label forstep = new Label("forstep");
         Label forjudge = new Label("forjudge");
         Label forend = new Label("forend");
 
+        Label tmpLoopContinueTarget = curLoopContinueTarget;
+        Label tmpLoopBreakTarget = curLoopBreakTarget;
+
+        curLoopBreakTarget = forend;
+        curLoopContinueTarget = forstep;
+
+        // init to judge
         Jump initjump = new Jump(forjudge);
         curIns.linkNext(initjump);
         curIns = initjump;
 
+        // body
         curIns.linkNext(forbody);
         curIns = forbody;
         forNode.body.accept(this);
+
+        curLoopBreakTarget = tmpLoopBreakTarget;
+        curLoopContinueTarget = tmpLoopContinueTarget;
+
+        // body to step
+        Jump bodytostep = new Jump(forstep);
+        curIns.linkNext(bodytostep);
+        curIns = bodytostep;
+
+        // step
+        curIns.linkNext(forstep);
         forNode.iter.accept(this);
 
-        Jump jumptojudge = new Jump(forjudge);
-        curIns.linkNext(jumptojudge);
-        curIns = jumptojudge;
+        // step to judge
+        Jump steptojudge = new Jump(forjudge);
+        curIns.linkNext(steptojudge);
+        curIns = steptojudge;
 
+        // judge
         curIns.linkNext(forjudge);
         curIns = forjudge;
         forNode.cond.accept(this);
@@ -532,6 +557,42 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
 
     @Override
     public IRBaseClass visit(WhileNode whileNode) {
+        Label whilebody = new Label("whilebody");
+        Label whilejudge = new Label("whilejudge");
+        Label whileend = new Label("whileend");
+
+        Label tmpLoopBreakTarget = curLoopBreakTarget;
+        Label tmpLoopContinueTarget = curLoopContinueTarget;
+
+        // init to judge
+        Jump initjump = new Jump(whilejudge);
+        curIns.linkNext(initjump);
+        curIns = initjump;
+
+        // body
+        curIns.linkNext(whilebody);
+        curIns = whilebody;
+        whileNode.body.accept(this);
+
+        curLoopContinueTarget = tmpLoopContinueTarget;
+        curLoopBreakTarget = tmpLoopBreakTarget;
+
+        // body to judge
+        Jump bodytojudge = new Jump(whilejudge);
+        curIns.linkNext(bodytojudge);
+        curIns = bodytojudge;
+
+        // judge
+        curIns.linkNext(whilejudge);
+        curIns = whilejudge;
+        whileNode.cond.accept(this);
+        IntValue whilecond = whileNode.cond.intValue;
+        Branch whilejump = new Branch(whilecond, whilebody, whileend);
+        curIns.linkNext(whilejump);
+        curIns = whilejump;
+
+        curIns.linkNext(whileend);
+        curIns = whileend;
         return null;
     }
 }
