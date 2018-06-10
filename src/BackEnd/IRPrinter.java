@@ -66,7 +66,8 @@ public class IRPrinter implements IRVisitor {
 
     @Override
     public void visit(IRRoot irRoot) {
-
+        System.out.println(irRoot);
+        printnext(irRoot);
     }
 
     @Override
@@ -83,7 +84,8 @@ public class IRPrinter implements IRVisitor {
 
     @Override
     public void visit(Load load) {
-
+        System.out.println(load.toString());
+        printnext(load);
     }
 
     @Override
@@ -94,7 +96,7 @@ public class IRPrinter implements IRVisitor {
 
     @Override
     public void visit(Register register) {
-
+        System.out.println(register.toString());
     }
 
     @Override
@@ -105,7 +107,8 @@ public class IRPrinter implements IRVisitor {
 
     @Override
     public void visit(UnaryOperation unaryOperation) {
-
+        System.out.println(unaryOperation.toString());
+        printnext(unaryOperation);
     }
 
     @Override

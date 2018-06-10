@@ -29,4 +29,9 @@ public class Load extends IRInstruction {
     public int getSize() {
         return size;
     }
+
+    @Override
+    public String toString() {
+        return "[Load] : " + '(' + dest + ") = (" + address + '+' + offset + ") " + size;
+    }
 }

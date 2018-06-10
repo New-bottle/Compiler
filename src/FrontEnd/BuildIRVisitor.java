@@ -5,7 +5,6 @@ import CompilerOptions.CompilerOptions;
 import IR.*;
 import Symbols.*;
 
-import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +19,10 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
     private Scope currentscope;
     private Label curLoopContinueTarget;
     private Label curLoopBreakTarget;
+    private Label curFunctionEnd;
+    private Function curFunction;
+    private boolean isFunctionArgDecl; // FIXME really need?
+    private Register rax = new VirtualRegister("rax");
 
     Map<Symbol, VirtualRegister> varmap;
 
@@ -356,18 +359,25 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
 
     @Override
     public IRBaseClass visit(FuncDeclNode funcDeclNode) {
+        curFunctionEnd = new Label(funcDeclNode.name+"-end");
         if (funcDeclNode.scope != null) {
             currentscope = funcDeclNode.scope;
         }
         append(new Label(funcDeclNode.name));
+        curFunction = new Function((FunctionTypeSymbol) globalscope.resolve(funcDeclNode.name));
+        irRoot.functions.put(funcDeclNode.name, curFunction);
 
+        isFunctionArgDecl = true;
         if (funcDeclNode.parameters != null) {
             for (int i = 0; i < funcDeclNode.parameters.size(); i++) {
                 funcDeclNode.parameters.get(i).accept(this);
             }
         }
+        isFunctionArgDecl = false;
 
         funcDeclNode.body.accept(this);
+        append(curFunctionEnd);
+
         if (funcDeclNode.scope != null) {
             currentscope = currentscope.getEnclosingScope();
         }
@@ -376,6 +386,13 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
 
     @Override
     public IRBaseClass visit(FunctionCallNode functionCallNode) {
+        Function func = irRoot.functions.get(functionCallNode.name);
+        VirtualRegister reg = new VirtualRegister("funcCallreg");
+        Call call = new Call(reg, func);
+        for (int i = 0; i < functionCallNode.parameters.size(); ++i) {
+            call.appendArg(functionCallNode.parameters.get(i).intValue);
+        }
+        append(call);
         return null;
     }
 
@@ -534,6 +551,11 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
 
     @Override
     public IRBaseClass visit(ReturnNode returnNode) {
+        if (returnNode.expr != null) {
+            returnNode.expr.accept(this);
+            append(new Move(rax, returnNode.expr.intValue));
+        }
+        append(new Jump(curFunctionEnd));
         return null;
     }
 
@@ -591,6 +613,10 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
         VariableSymbol varsym = (VariableSymbol) currentscope.resolve(variableDecl.name);
         VirtualRegister reg = new VirtualRegister(variableDecl.name);
         varmap.put(varsym, reg);
+        if (currentscope == globalscope) {
+            StaticData data = new StaticSpace(variableDecl.type.getRegisterSize(), variableDecl.name);
+            irRoot.dataList.add(data);
+        }
         if (variableDecl.init != null) {
             variableDecl.init.accept(this);
             append(new Move(reg, variableDecl.init.intValue));
