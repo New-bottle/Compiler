@@ -23,4 +23,9 @@ public class Store extends IRInstruction {
     public void accept(IRVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    public String toString() {
+        return "[Store] :" + size + " (" + address + '+' + offset + ") = " + value + "; " + isStaticData;
+    }
 }

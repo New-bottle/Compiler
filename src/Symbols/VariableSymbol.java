@@ -11,11 +11,11 @@ public class VariableSymbol extends Symbol {
 
     @Override
     public int getRegisterSize() {
-        return -1;
+        return returntype.getRegisterSize();
     }
 
     @Override
     public int getMemorySize() {
-        return -1;
+        return returntype.getMemorySize();
     }
 }

@@ -30,6 +30,12 @@ public class IRPrinter implements IRVisitor {
     }
 
     @Override
+    public void visit(HeapAllocate heapAllocate) {
+        System.out.println(heapAllocate.toString());
+        printnext(heapAllocate);
+    }
+
+    @Override
     public void visit(IntComparison intComparison) {
         System.out.println(intComparison.toString());
         printnext(intComparison);
@@ -94,6 +100,7 @@ public class IRPrinter implements IRVisitor {
     @Override
     public void visit(Store store) {
         System.out.println(store.toString());
+        printnext(store);
     }
 
     @Override

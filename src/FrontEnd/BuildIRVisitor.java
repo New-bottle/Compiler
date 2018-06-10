@@ -3,11 +3,11 @@ package FrontEnd;
 import AST.*;
 import CompilerOptions.CompilerOptions;
 import IR.*;
-import Symbols.Scope;
-import Symbols.Symbol;
-import Symbols.VariableSymbol;
+import Symbols.*;
 
+import java.lang.reflect.Array;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
@@ -440,8 +440,75 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
         return null;
     }
 
+    private VirtualRegister createArray(ArrayType type, List<ExprNode> dims, int j) {
+        ExprNode dim = dims.get(j);
+        boolean getaddr = getAddress;
+        getAddress = false;
+        dim.accept(this);
+        getAddress = getaddr;
+
+        ArraySymbol t = (ArraySymbol) globalscope.resolve(type);
+        VirtualRegister reg = new VirtualRegister("reg"+j);
+        append(new BinaryOperation(reg, BinaryOperation.BinaryOp.MUL, dim.intValue, new IntImmediate(t.returntype.getRegisterSize())));
+        append(new BinaryOperation(reg, BinaryOperation.BinaryOp.ADD, reg, new IntImmediate(CompilerOptions.getSizeInt())));
+        append(new HeapAllocate(reg, reg));
+        append(new Store(dim.intValue, CompilerOptions.getSizeInt(), reg, 0));
+
+        if (!(type.baseType instanceof ArrayType)) return reg;
+
+        VirtualRegister i = new VirtualRegister("i");
+        Label forbody = new Label("forbody");
+        Label forjudge = new Label("forjudge");
+        Label forend = new Label("forend");
+
+        append(new Move(i, new IntImmediate(1)));
+        append(new Jump(forjudge));
+
+        append(forbody);
+        VirtualRegister pos = new VirtualRegister("pos");
+        append(new BinaryOperation(pos, BinaryOperation.BinaryOp.MUL, i, new IntImmediate(type.baseType.getRegisterSize())));
+        append(new BinaryOperation(pos, BinaryOperation.BinaryOp.ADD, pos, new IntImmediate(CompilerOptions.getSizeInt())));
+        append(new BinaryOperation(pos, BinaryOperation.BinaryOp.ADD, pos, reg));
+        VirtualRegister tmp = createArray((ArrayType)type.baseType, dims, j + 1);
+        append(new Store(tmp, CompilerOptions.getSizePointer(), pos, 0));
+        append(new BinaryOperation(i, BinaryOperation.BinaryOp.ADD, i, new IntImmediate(1)));
+        append(new Jump(forjudge));
+
+        append(forjudge);
+        VirtualRegister cond = new VirtualRegister("forcond");
+        append(new IntComparison(cond, IntComparison.Condition.LE, i, dim.intValue));
+        append(new Branch(cond, forbody, forend));
+
+        append(forend);
+        return reg;
+    }
+
     @Override
     public IRBaseClass visit(NewExpr newExpr) {
+        Type type = newExpr.exprType;
+        VirtualRegister reg;
+        if (type.getType() == Symbol.Types.STRUCT) {
+            reg = new VirtualRegister("new_return");
+            ClassTypeSymbol t = (ClassTypeSymbol) globalscope.resolve(type);
+            append(new HeapAllocate(reg, new IntImmediate(t.getMemorySize())));
+        } else {
+            reg = createArray((ArrayType)type, newExpr.dim, 0);
+
+            /*
+            ExprNode dim = newExpr.dim.get(0);
+            boolean getaddr = getAddress;
+            getAddress = false;
+            dim.accept(this);
+            getAddress = getaddr;
+
+            ArraySymbol t = (ArraySymbol) globalscope.resolve(type);
+            append(new BinaryOperation(reg, BinaryOperation.BinaryOp.MUL, dim.intValue, new IntImmediate(t.returntype.getRegisterSize())));
+            append(new BinaryOperation(reg, BinaryOperation.BinaryOp.ADD, reg, new IntImmediate(CompilerOptions.getSizeInt())));
+            append(new HeapAllocate(reg, reg));
+            append(new Store(dim.intValue, CompilerOptions.getSizeInt(), reg, 0));
+            */
+        }
+        newExpr.intValue = reg;
         return null;
     }
 

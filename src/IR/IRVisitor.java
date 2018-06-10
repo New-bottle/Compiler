@@ -5,6 +5,7 @@ public interface IRVisitor {
     void visit(Branch branch);
     void visit(BranchInstruction branchInstruction);
     void visit(Function function);
+    void visit(HeapAllocate heapAllocate);
     void visit(IntComparison intComparison);
     void visit(IntImmediate intImmediate);
     void visit(IntValue intValue);

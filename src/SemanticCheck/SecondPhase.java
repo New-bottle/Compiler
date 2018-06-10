@@ -52,7 +52,8 @@ public class SecondPhase<T> implements ASTVisitor<T> {
             }
         }
         currentScope.define(variableDecl.name, new VariableSymbol(typeSymbol, variableDecl.name));
-        return null;    }
+        return null;
+    }
 
     @Override
     public T visit(UnaryExprNode unaryExprNode) {
