@@ -15,7 +15,7 @@ import java.io.FileInputStream;
 
 public class IrGenerateTest {
     static public void main(String[] args) throws Exception{
-        String pos = "/home/yanhongyu/Git/homework/Compiler/test/IR/testaref.txt";
+        String pos = "/home/hongyuyan/Git/homework/Compiler/test/IR/testfunc.txt";
         FileInputStream fin = new FileInputStream(pos);
         ANTLRInputStream input = new ANTLRInputStream(fin);
         grammarsLexer lexer = new grammarsLexer(input);

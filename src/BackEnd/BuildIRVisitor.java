@@ -1,4 +1,4 @@
-package FrontEnd;
+package BackEnd;
 
 import AST.*;
 import CompilerOptions.CompilerOptions;
@@ -389,10 +389,13 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
         Function func = irRoot.functions.get(functionCallNode.name);
         VirtualRegister reg = new VirtualRegister("funcCallreg");
         Call call = new Call(reg, func);
-        for (int i = 0; i < functionCallNode.parameters.size(); ++i) {
-            call.appendArg(functionCallNode.parameters.get(i).intValue);
+        if (functionCallNode.parameters != null) {
+            for (int i = 0; i < functionCallNode.parameters.size(); ++i) {
+                call.appendArg(functionCallNode.parameters.get(i).intValue);
+            }
         }
         append(call);
+        functionCallNode.intValue = reg;
         return null;
     }
 

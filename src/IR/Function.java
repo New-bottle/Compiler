@@ -21,4 +21,9 @@ public class Function extends IRBaseClass {
     public void accept(IRVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    public String toString() {
+        return name + "(" + type.returnType + ")" ;
+    }
 }

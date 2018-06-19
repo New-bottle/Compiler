@@ -25,4 +25,9 @@ public class Call extends IRInstruction {
     public void accept(IRVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    public String toString() {
+        return dest.toString() + " = [Call :" + func.toString() + "]" + "(" + args.toString() + ")";
+    }
 }
