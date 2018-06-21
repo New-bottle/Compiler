@@ -452,6 +452,26 @@ public class BuildIRVisitor implements ASTVisitor<IRBaseClass> {
 
     @Override
     public IRBaseClass visit(MemberNode memberNode) {
+        boolean getaddr = getAddress;
+        getAddress = false;
+        memberNode.expr.accept(this);
+        getAddress = getaddr;
+
+        IntValue addr = memberNode.expr.intValue;
+        VirtualRegister reg = new VirtualRegister("member access: " + memberNode.name);
+        ClassTypeSymbol type = (ClassTypeSymbol) globalscope.resolve(memberNode.expr.exprType);
+        SymbolInfo info = type.members.getinfo(memberNode.name);
+
+        IntValue tmp1 = new IntImmediate(info.offset);
+        append(new BinaryOperation(reg, BinaryOperation.BinaryOp.ADD, memberNode.expr.intValue, tmp1));
+
+        if (getAddress) {
+            memberNode.addressValue = reg;
+            memberNode.addressOffset = 0;
+        } else {
+            append(new Load(reg, type.getRegisterSize(), reg, CompilerOptions.getSizeInt()));
+            memberNode.intValue = reg;
+        }
         return null;
     }
 

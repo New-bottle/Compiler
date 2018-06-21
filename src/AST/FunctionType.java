@@ -15,6 +15,6 @@ public class FunctionType extends Type {
 
     @Override
     public int getRegisterSize() {
-        return CompilerOptions.getSizePointer();
+        return 0;
     }
 }

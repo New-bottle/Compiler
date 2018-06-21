@@ -29,11 +29,11 @@ public class FunctionTypeSymbol extends TypeSymbol {
 
     @Override
     public int getRegisterSize() {
-        return CompilerOptions.getSizePointer();
+        return 0;
     }
 
     @Override
     public int getMemorySize() {
-        return CompilerOptions.getSizePointer();
+        return 0;
     }
 }

@@ -8,6 +8,7 @@ import Exception.*;
 
 public class SymbolTable implements Scope {
     Map<String, Symbol> symbols = new HashMap<String, Symbol>();
+    Map<String, SymbolInfo> infos = new HashMap<>();
     private Scope enclosingScope;
     private int offset = 0;
 
@@ -22,7 +23,11 @@ public class SymbolTable implements Scope {
             throw new RuntimeException("Symbol name has been used : " + name); // TODO RE or ParseError?
         }
         symbols.put(name, sym);
+        infos.put(name, new SymbolInfo(sym, offset));
         offset += sym.getRegisterSize();
+    }
+    public SymbolInfo getinfo(String name) {
+        return infos.get(name);
     }
     public Symbol resolve(String name) {
         if (symbols.containsKey(name)) return symbols.get(name);
